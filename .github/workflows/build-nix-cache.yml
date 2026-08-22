@@ -22,38 +22,45 @@ concurrency:
 
 jobs:
   build-cache:
-    name: Build ${{ matrix.name }}
-    runs-on: ${{ matrix.runner }}
+    name: Build ${{ matrix.target.name }}
+    runs-on: ${{ matrix.target.runner }}
     permissions:
       actions: write
       contents: read
     strategy:
       fail-fast: false
       matrix:
-        include:
+        target:
           - name: Avalon
             runner: macos-26
-            target: path:.#darwinConfigurations.Avalon.system
+            flake_namespace: darwinConfigurations
+            flake_suffix: .system
           # - name: nixos-world
           #   runner: ubuntu-26.04-arm
-          #   target: path:.#nixosConfigurations.nixos-world.config.system.build.toplevel
-          - name: work-ubuntu
+          #   flake_namespace: nixosConfigurations
+          #   flake_suffix: .config.system.build.toplevel
+          - &work_ubuntu
+            name: work-ubuntu
             runner: ubuntu-22.04
-            target: path:.#systemConfigs.work-ubuntu
+            flake_namespace: systemConfigs
+            flake_suffix: ""
+        config:
+          - &nix_config
+            # A file-local constant shared by every job that installs Nix.
+            extra_substituters: >-
+              https://zihan-type.cachix.org
+              https://cache.numtide.com
+              https://nix-community.cachix.org
+              https://devenv.cachix.org
+              https://cache.soopy.moe
+            extra_trusted_public_keys: >-
+              zihan-type.cachix.org-1:Et3+mUASnAGou+mo4Ei1jdQDUWI/UnlF1k3xvxnJzIo=
+              niks3.numtide.com-1:DTx8wZduET09hRmMtKdQDxNNthLQETkc/yaX7M4qK0g=
+              nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs=
+              devenv.cachix.org-1:w1cLUi8dv3hnoSPGAuibQv+f9TZLr6cv/Hm9XgU50cw=
+              cache.soopy.moe-1:0RZVsQeR+GOh0VQI9rvnHz55nVXkFardDqfm4+afjPo=
     env:
-      CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
-      EXTRA_SUBSTITUTERS: >-
-        https://zihan-type.cachix.org
-        https://cache.numtide.com
-        https://nix-community.cachix.org
-        https://devenv.cachix.org
-        https://cache.soopy.moe
-      EXTRA_TRUSTED_PUBLIC_KEYS: >-
-        zihan-type.cachix.org-1:Et3+mUASnAGou+mo4Ei1jdQDUWI/UnlF1k3xvxnJzIo=
-        niks3.numtide.com-1:DTx8wZduET09hRmMtKdQDxNNthLQETkc/yaX7M4qK0g=
-        nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs=
-        devenv.cachix.org-1:w1cLUi8dv3hnoSPGAuibQv+f9TZLr6cv/Hm9XgU50cw=
-        cache.soopy.moe-1:0RZVsQeR+GOh0VQI9rvnHz55nVXkFardDqfm4+afjPo=
+      HAS_CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN != '' }}
 
     steps:
       - name: Checkout repository
@@ -70,8 +77,8 @@ jobs:
         with:
           extra_nix_config: |
             access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
-            extra-substituters = ${{ env.EXTRA_SUBSTITUTERS }}
-            extra-trusted-public-keys = ${{ env.EXTRA_TRUSTED_PUBLIC_KEYS }}
+            extra-substituters = ${{ matrix.config.extra_substituters }}
+            extra-trusted-public-keys = ${{ matrix.config.extra_trusted_public_keys }}
             keep-derivations = true
             keep-outputs = true
 
@@ -83,48 +90,41 @@ jobs:
         if: ${{ github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.prewarm) }}
         uses: nix-community/cache-nix-action@v7
         with:
-          primary-key: ${{ github.workflow }}-${{ matrix.name }}-${{ hashFiles('flake.lock', '**/*.nix') }}
-          restore-prefixes-first-match: ${{ github.workflow }}-${{ matrix.name }}-
+          primary-key: ${{ github.workflow }}-${{ matrix.target.name }}-${{ hashFiles('flake.lock', '**/*.nix') }}
+          restore-prefixes-first-match: ${{ github.workflow }}-${{ matrix.target.name }}-
           save: true
           gc-max-store-size: 1G
           purge: true
           purge-primary-key: never
-          purge-prefixes: ${{ github.workflow }}-${{ matrix.name }}-
+          purge-prefixes: ${{ github.workflow }}-${{ matrix.target.name }}-
           purge-created: 0
 
       - name: Warn when Cachix token is missing
-        if: ${{ env.CACHIX_AUTH_TOKEN == '' }}
+        if: ${{ env.HAS_CACHIX_AUTH_TOKEN != 'true' }}
         run: echo "::warning::CACHIX_AUTH_TOKEN is not set, skipping Cachix configuration"
 
       - name: Configure Cachix
-        if: ${{ env.CACHIX_AUTH_TOKEN != '' }}
+        if: ${{ env.HAS_CACHIX_AUTH_TOKEN == 'true' }}
         uses: cachix/cachix-action@v17
         with:
           name: zihan-type
-          authToken: ${{ env.CACHIX_AUTH_TOKEN }}
+          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
           useDaemon: false
 
-      - name: Build ${{ matrix.name }}
-        run: nix build "${{ matrix.target }}"
+      - name: Build ${{ matrix.target.name }}
+        run: nix build "path:.#${{ matrix.target.flake_namespace }}.${{ matrix.target.name }}${{ matrix.target.flake_suffix }}"
 
   test-work-ubuntu:
-    name: Test work-ubuntu as work user
-    runs-on: ubuntu-22.04
+    name: Test ${{ matrix.target.name }} as work user
+    runs-on: ${{ matrix.target.runner }}
     permissions:
       contents: read
-    env:
-      EXTRA_SUBSTITUTERS: >-
-        https://zihan-type.cachix.org
-        https://cache.numtide.com
-        https://nix-community.cachix.org
-        https://devenv.cachix.org
-        https://cache.soopy.moe
-      EXTRA_TRUSTED_PUBLIC_KEYS: >-
-        zihan-type.cachix.org-1:Et3+mUASnAGou+mo4Ei1jdQDUWI/UnlF1k3xvxnJzIo=
-        niks3.numtide.com-1:DTx8wZduET09hRmMtKdQDxNNthLQETkc/yaX7M4qK0g=
-        nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs=
-        devenv.cachix.org-1:w1cLUi8dv3hnoSPGAuibQv+f9TZLr6cv/Hm9XgU50cw=
-        cache.soopy.moe-1:0RZVsQeR+GOh0VQI9rvnHz55nVXkFardDqfm4+afjPo=
+    strategy:
+      matrix:
+        target:
+          - *work_ubuntu
+        config:
+          - *nix_config
 
     steps:
       - name: Checkout repository
@@ -142,8 +142,8 @@ jobs:
             access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
             experimental-features = nix-command flakes auto-allocate-uids cgroups
             auto-allocate-uids = true
-            extra-substituters = ${{ env.EXTRA_SUBSTITUTERS }}
-            extra-trusted-public-keys = ${{ env.EXTRA_TRUSTED_PUBLIC_KEYS }}
+            extra-substituters = ${{ matrix.config.extra_substituters }}
+            extra-trusted-public-keys = ${{ matrix.config.extra_trusted_public_keys }}
 
       - name: Temporarily update flake.lock for prewarm tests
         if: ${{ github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.prewarm) }}
@@ -152,12 +152,12 @@ jobs:
       - name: Restore Nix store
         uses: nix-community/cache-nix-action@v7
         with:
-          primary-key: ${{ github.workflow }}-work-ubuntu-${{ hashFiles('flake.lock', '**/*.nix') }}
-          restore-prefixes-first-match: ${{ github.workflow }}-work-ubuntu-
+          primary-key: ${{ github.workflow }}-${{ matrix.target.name }}-${{ hashFiles('flake.lock', '**/*.nix') }}
+          restore-prefixes-first-match: ${{ github.workflow }}-${{ matrix.target.name }}-
           save: false
 
-      - name: Build work-ubuntu as the existing work user
-        run: ./tests/work-ubuntu/build-as-user.sh "${GITHUB_WORKSPACE}"
+      - name: Build ${{ matrix.target.name }} as the existing work user
+        run: ./tests/${{ matrix.target.name }}/build-as-user.sh "${GITHUB_WORKSPACE}"
 
-      - name: Test work-ubuntu activation on Ubuntu 22.04
-        run: nix build "path:.#checks.x86_64-linux.work-ubuntu" --print-build-logs
+      - name: Test ${{ matrix.target.name }} activation on Ubuntu 22.04
+        run: nix build "path:.#checks.x86_64-linux.${{ matrix.target.name }}" --print-build-logs
