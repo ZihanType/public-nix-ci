@@ -52,5 +52,11 @@
     "version": "3.5.0",
     "url": "https://github.com/ZihanType/public-nix-ci/releases/download/extension-homllehcipjgpbpepcojhgcpfdopjhml-v3.5.0/homllehcipjgpbpepcojhgcpfdopjhml-3.5.0.crx",
     "sha256": "sha256-PreF6Y1Tmb05DnrR/GrzWjt6AS1eas7d+0jr9qtrfQE="
+  },
+  {
+    "id": "jeoacafpbcihiomhlakheieifhpjdfeo",
+    "version": "21.1.2",
+    "url": "https://github.com/ZihanType/public-nix-ci/releases/download/extension-jeoacafpbcihiomhlakheieifhpjdfeo-v21.1.2/jeoacafpbcihiomhlakheieifhpjdfeo-21.1.2.crx",
+    "sha256": "sha256-bqKGFF19zWs5WV9Q3Y9vGcaUZFwlt/LMTcQT9oUH+bI="
   }
 ]
