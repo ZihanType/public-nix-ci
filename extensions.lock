@@ -70,5 +70,11 @@
     "version": "3.4.117",
     "url": "https://github.com/ZihanType/public-nix-ci/releases/download/extension-jpbjcnkcffbooppibceonlgknpkniiff-v3.4.117/jpbjcnkcffbooppibceonlgknpkniiff-3.4.117.crx",
     "sha256": "sha256-taVCSp9TO9ax014Vv7pNGbdVDbUQ3vXuh3drQlTPogM="
+  },
+  {
+    "id": "lckanjgmijmafbedllaakclkaicjfmnk",
+    "version": "1.26.0",
+    "url": "https://github.com/ZihanType/public-nix-ci/releases/download/extension-lckanjgmijmafbedllaakclkaicjfmnk-v1.26.0/lckanjgmijmafbedllaakclkaicjfmnk-1.26.0.crx",
+    "sha256": "sha256-rMFzGyrQCJ85p93PDHIy7TU329AZuOjBvuzoeO1Yoxo="
   }
 ]
