@@ -22,5 +22,11 @@
     "version": "2.0.2",
     "url": "https://github.com/ZihanType/public-nix-ci/releases/download/extension-djflhoibgkdhkhhcedjiklpkjnoahfmg-v2.0.2/djflhoibgkdhkhhcedjiklpkjnoahfmg-2.0.2.crx",
     "sha256": "sha256-91dvkBmxaxmBtcUPIrc1tcyN/DAkyeypaBayZrxxY0Q="
+  },
+  {
+    "id": "donbcfbmhbcapadipfkeojnmajbakjdc",
+    "version": "0.5.0.65535",
+    "url": "https://github.com/ZihanType/public-nix-ci/releases/download/extension-donbcfbmhbcapadipfkeojnmajbakjdc-v0.5.0.65535/donbcfbmhbcapadipfkeojnmajbakjdc-0.5.0.65535.crx",
+    "sha256": "sha256-PrwqVY8YbYeY2EcAW28IAIDzg00NzPTkpwEOXe41Avk="
   }
 ]
