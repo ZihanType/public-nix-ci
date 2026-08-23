@@ -88,8 +88,15 @@ class LockTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "without changing version"):
             diff_locks([old], [new])
 
-    def test_repository_empty_lock_parses(self) -> None:
-        self.assertEqual(read_lock(REPOSITORY_ROOT / "extensions.lock"), ())
+    def test_empty_lock_parses(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "extensions.lock"
+            path.write_text("[]\n", encoding="utf-8")
+            self.assertEqual(read_lock(path), ())
+
+    def test_repository_lock_is_canonical(self) -> None:
+        path = REPOSITORY_ROOT / "extensions.lock"
+        self.assertEqual(path.read_text(encoding="utf-8"), render_lock(read_lock(path)))
 
 
 if __name__ == "__main__":
