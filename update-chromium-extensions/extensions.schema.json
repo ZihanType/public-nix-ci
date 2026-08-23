@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://raw.githubusercontent.com/ZihanType/public-nix-ci/main/extensions.schema.json",
+  "$id": "https://raw.githubusercontent.com/ZihanType/public-nix-ci/main/update-chromium-extensions/extensions.schema.json",
   "title": "Chromium extension catalog",
   "description": "Human-maintained sources resolved into immutable CRX artifacts and extensions.lock.",
   "type": "object",

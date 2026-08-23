@@ -6,8 +6,8 @@ import tempfile
 import unittest
 
 
-REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(REPOSITORY_ROOT / "scripts"))
+COMPONENT_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(COMPONENT_ROOT / "scripts"))
 
 from chromium_extensions.model import (  # noqa: E402
     Catalog,
@@ -43,7 +43,7 @@ class JsoncTests(unittest.TestCase):
 
 class CatalogTests(unittest.TestCase):
     def test_repository_catalog_parses(self) -> None:
-        catalog = Catalog.read(REPOSITORY_ROOT / "extensions.jsonc")
+        catalog = Catalog.read(COMPONENT_ROOT / "extensions.jsonc")
         self.assertEqual(len(catalog.chrome_web_store_ids), 17)
         self.assertEqual(len(catalog.github_releases), 1)
         self.assertEqual(catalog.github_releases[0].name, "ublock-origin")
@@ -95,7 +95,7 @@ class LockTests(unittest.TestCase):
             self.assertEqual(read_lock(path), ())
 
     def test_repository_lock_is_canonical(self) -> None:
-        path = REPOSITORY_ROOT / "extensions.lock"
+        path = COMPONENT_ROOT / "extensions.lock"
         self.assertEqual(path.read_text(encoding="utf-8"), render_lock(read_lock(path)))
 
 

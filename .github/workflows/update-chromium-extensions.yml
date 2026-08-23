@@ -18,6 +18,10 @@ jobs:
     timeout-minutes: 45
     permissions:
       contents: write
+    defaults:
+      run:
+        # Component commands use paths relative to their feature-owned directory.
+        working-directory: update-chromium-extensions
 
     steps:
       - name: Checkout default branch with generated history

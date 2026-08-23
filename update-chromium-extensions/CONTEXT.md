@@ -1,8 +1,12 @@
-# Chromium Extension Distribution
+# Chromium Extension Update
 
-This context describes the extension identities and distribution channels managed by the public CI repository.
+This context describes the extension identities and distribution channels managed by the Chromium extension update component.
 
 ## Language
+
+**Chromium extension update component**:
+The project capability that resolves both Chrome Web Store and GitHub Release sources into extension artifacts and an extension lock.
+_Avoid_: Chrome extension updater, Chrome Web Store updater
 
 **Chrome Web Store extension**:
 An extension acquired from the Chrome Web Store and mirrored byte-for-byte, retaining the upstream publisher's signature and extension ID.

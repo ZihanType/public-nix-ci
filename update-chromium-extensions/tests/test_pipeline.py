@@ -4,13 +4,14 @@ from pathlib import Path
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 
-REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(REPOSITORY_ROOT / "scripts"))
+COMPONENT_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(COMPONENT_ROOT / "scripts"))
 
 from chromium_extensions.model import LockEntry, diff_locks, read_lock  # noqa: E402
-from chromium_extensions.pipeline import _commit_lock_changes  # noqa: E402
+from chromium_extensions.pipeline import GitWorkingTree, _commit_lock_changes  # noqa: E402
 
 
 EXAMPLE_HASH = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
@@ -56,6 +57,32 @@ class PipelineCommitTests(unittest.TestCase):
             ],
         )
         self.assertEqual(git.pushes, 1)
+
+    def test_commit_file_uses_repository_relative_component_path(self) -> None:
+        repository_root = Path("/repository")
+        key_path = repository_root / "update-chromium-extensions" / "keys" / "example.pem"
+        git = GitWorkingTree(repository_root)
+
+        with mock.patch.object(git, "_run") as run:
+            git.commit_file(key_path, "add example key")
+
+        self.assertEqual(
+            run.call_args_list,
+            [
+                mock.call(
+                    ["add", "--", "update-chromium-extensions/keys/example.pem"]
+                ),
+                mock.call(
+                    [
+                        "commit",
+                        "-m",
+                        "add example key",
+                        "--",
+                        "update-chromium-extensions/keys/example.pem",
+                    ]
+                ),
+            ],
+        )
 
 
 if __name__ == "__main__":

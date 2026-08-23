@@ -111,6 +111,7 @@ def _github_notes(
     extension_id: str,
     version: str,
     crx_contents: bytes,
+    signing_key_repository_path: Path,
 ) -> str:
     return """# Re-signed GitHub Release extension artifact
 
@@ -125,7 +126,7 @@ def _github_notes(
 - Manifest version: `{version}`
 - CRX SHA-256: `sha256:{crx_sha256}`
 
-The signing private key is deliberately public under `keys/{source_name}.pem`; the signature provides a stable extension ID, not confidential publisher authentication.
+The signing private key is deliberately public under `{signing_key_repository_path}`; the signature provides a stable extension ID, not confidential publisher authentication.
 """.format(
         repository=source.repository,
         upstream_tag=upstream_tag,
@@ -138,13 +139,14 @@ The signing private key is deliberately public under `keys/{source_name}.pem`; t
         extension_id=extension_id,
         version=version,
         crx_sha256=sha256_hex(crx_contents),
-        source_name=source.name,
+        signing_key_repository_path=signing_key_repository_path.as_posix(),
     )
 
 
 class Resolver:
     def __init__(
         self,
+        component_root: Path,
         repository_root: Path,
         repository: str,
         *,
@@ -152,6 +154,7 @@ class Resolver:
         openssl: str = "openssl",
         workers: int = 8,
     ) -> None:
+        self.component_root = component_root
         self.repository_root = repository_root
         self.repository = repository
         self.openssl = openssl
@@ -192,7 +195,7 @@ class Resolver:
     ) -> Tuple[ResolvedArtifact, Optional[PendingKey]]:
         upstream = self.public_github.resolve_zip(source)
         canonical = canonicalize_extension_zip(upstream.contents)
-        final_key_path = self.repository_root / source.key_path
+        final_key_path = self.component_root / source.key_path
         pending_key: Optional[PendingKey] = None
         if final_key_path.exists():
             key_path = final_key_path
@@ -220,6 +223,7 @@ class Resolver:
                 extension_id=built.extension_id,
                 version=canonical.version,
                 crx_contents=built.contents,
+                signing_key_repository_path=final_key_path.relative_to(self.repository_root),
             ),
         )
         lock_entry = LockEntry(
@@ -365,6 +369,7 @@ def _commit_lock_changes(
 
 @dataclass(frozen=True)
 class PipelineOptions:
+    component_root: Path
     repository_root: Path
     catalog_path: Path
     lock_path: Path
@@ -383,6 +388,7 @@ def run_pipeline(options: PipelineOptions) -> Tuple[LockChange, ...]:
 
     with tempfile.TemporaryDirectory(prefix="chromium-extensions-") as directory:
         resolver = Resolver(
+            options.component_root,
             options.repository_root,
             options.repository,
             github_token=options.github_token,

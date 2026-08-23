@@ -8,8 +8,8 @@ import unittest
 import zipfile
 
 
-REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(REPOSITORY_ROOT / "scripts"))
+COMPONENT_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(COMPONENT_ROOT / "scripts"))
 
 from chromium_extensions.crx3 import (  # noqa: E402
     build_reproducible_crx3,

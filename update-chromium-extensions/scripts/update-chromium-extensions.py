@@ -11,13 +11,16 @@ import sys
 from chromium_extensions.pipeline import PipelineOptions, run_pipeline
 
 
-REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
+# This entry point lives directly under the component's scripts directory.
+# Keep component-owned inputs separate from the enclosing Git repository root.
+COMPONENT_ROOT = Path(__file__).resolve().parent.parent
+REPOSITORY_ROOT = COMPONENT_ROOT.parent
 
 
 def parse_arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--catalog", type=Path, default=REPOSITORY_ROOT / "extensions.jsonc")
-    parser.add_argument("--lock", type=Path, default=REPOSITORY_ROOT / "extensions.lock")
+    parser.add_argument("--catalog", type=Path, default=COMPONENT_ROOT / "extensions.jsonc")
+    parser.add_argument("--lock", type=Path, default=COMPONENT_ROOT / "extensions.lock")
     parser.add_argument(
         "--repository",
         default=os.environ.get("GITHUB_REPOSITORY", "ZihanType/public-nix-ci"),
@@ -42,6 +45,7 @@ def main() -> int:
     try:
         run_pipeline(
             PipelineOptions(
+                component_root=COMPONENT_ROOT,
                 repository_root=REPOSITORY_ROOT,
                 catalog_path=arguments.catalog.resolve(),
                 lock_path=arguments.lock.resolve(),

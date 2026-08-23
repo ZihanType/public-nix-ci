@@ -10,4 +10,4 @@ Triage uses the five default canonical labels. See `docs/agents/triage-labels.md
 
 ### Domain docs
 
-Domain documentation uses a single-context layout. See `docs/agents/domain.md`.
+Domain documentation uses a context map and feature-owned glossaries. See `docs/agents/domain.md`.
