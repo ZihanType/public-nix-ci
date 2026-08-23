@@ -40,5 +40,11 @@
     "version": "0.3.5",
     "url": "https://github.com/ZihanType/public-nix-ci/releases/download/extension-fjkmabmdepjfammlpliljpnbhleegehm-v0.3.5/fjkmabmdepjfammlpliljpnbhleegehm-0.3.5.crx",
     "sha256": "sha256-nluCzt2TdOa8EyKW64kYxlXY3yjVVKD+ildCPyTJG2c="
+  },
+  {
+    "id": "gebbhagfogifgggkldgodflihgfeippi",
+    "version": "4.0.4",
+    "url": "https://github.com/ZihanType/public-nix-ci/releases/download/extension-gebbhagfogifgggkldgodflihgfeippi-v4.0.4/gebbhagfogifgggkldgodflihgfeippi-4.0.4.crx",
+    "sha256": "sha256-0ZO+7AY5dcy1AOXPtZ9sSPcj9Wl2RQkE9oOFZq7ESqM="
   }
 ]
