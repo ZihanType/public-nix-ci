@@ -2,22 +2,23 @@
   "$schema": "./extensions.schema.json",
 
   "chromeWebStore": [
-    "bnomihfieiccainjcjblhegjgglakjdd", // 'Improve YouTube!' 🎧
-    "egehpkpgpgooebopjihjmnpejnjafefi", // Better History
+    "bnomihfieiccainjcjblhegjgglakjdd", // 'Improve YouTube!' 🎧 (for YouTube & Videos)
+    "egehpkpgpgooebopjihjmnpejnjafefi", // Better History | 管理、导出与删除历史记录
     "pdcpmagijalfljmkmjngeonclgbbannb", // C/C++ DevTools Support (DWARF)
     "lckanjgmijmafbedllaakclkaicjfmnk", // ClearURLs
     "ldpochfccmkkmhdbclfhpagapcfdljkj", // Decentraleyes
-    "jeoacafpbcihiomhlakheieifhpjdfeo", // Disconnect
-    "jpbjcnkcffbooppibceonlgknpkniiff", // Global Speed
+    "cofdbpoegempjloogbagkncekinflcnj", // DeepL：人工智能翻译器和写作助手
+    "jeoacafpbcihiomhlakheieifhpjdfeo", // Disconnect — Tracker Protection
+    "jpbjcnkcffbooppibceonlgknpkniiff", // Global Speed: 视频速度控制
     "nmbcckfgobecechfdamananmfnnjbbbd", // Imp Translate
-    "homllehcipjgpbpepcojhgcpfdopjhml", // QuickGo 外链直达
+    "homllehcipjgpbpepcojhgcpfdopjhml", // QuickGo 外链直达 — 无感知自动跳过*乎、*书、掘*金、C**N、少数派、Gi**e 等网站的安全中心跳转限制
     "gebbhagfogifgggkldgodflihgfeippi", // Return YouTube Dislike
     "donbcfbmhbcapadipfkeojnmajbakjdc", // Ruffle - Flash Emulator
     "mpiodijhokgodhhofbcjdecpffjipkle", // SingleFile
     "djflhoibgkdhkhhcedjiklpkjnoahfmg", // User-Agent Switcher for Chrome
     "fjkmabmdepjfammlpliljpnbhleegehm", // WebRTC Control
     "jinjaccalgkegednnccohejagnlnfdag", // 暴力猴
-    "bpoadfkcbjbfhfodiogcnhhhpibjhbnh", // 沉浸式翻译
+    "bpoadfkcbjbfhfodiogcnhhhpibjhbnh", // 沉浸式翻译 - AI 双语网页翻译 | PDF翻译 | 视频翻译 | 漫画翻译
     "pkehgijcmpdhfbdbbnkijodmdjhbjlgp", // 隐私獾
   ],
 
