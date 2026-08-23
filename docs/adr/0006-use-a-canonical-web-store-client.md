@@ -1,0 +1,3 @@
+# Use a canonical Chrome Web Store acquisition client
+
+Chrome Web Store artifacts are resolved with the full version from the Stable channel in Google's Chrome for Testing metadata, plus explicit `os=linux`, `arch=x64`, and `prod=chromecrx` parameters. Chrome for Testing is the official automation-oriented distribution and metadata service; selecting its Stable channel does not select Beta, Dev, or Canary. These values define a deterministic acquisition client rather than a supported target browser; the previous updater's omitted platform and major-only version relied on undocumented service behavior. The acquired upstream-signed CRX is validated and mirrored unchanged into an immutable release.

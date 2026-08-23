@@ -1,0 +1,3 @@
+# Build deterministic CRX3 artifacts
+
+GitHub Release ZIPs are safely extracted and rebuilt as canonical ZIP payloads with sorted UTF-8 paths, fixed timestamps and permissions, fixed metadata, no directory entries, and stored rather than compressed contents. A small repository-owned Python signer uses OpenSSL RSA-SHA256 PKCS#1 v1.5 to wrap that payload in the official CRX3 format, then builds twice and independently verifies the signature and derived ID. Chromium's `--pack-extension` is rejected because filesystem timestamps and unsorted enumeration make its output unsuitable for the same-version immutability check.

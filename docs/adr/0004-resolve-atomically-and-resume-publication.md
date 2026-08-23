@@ -1,0 +1,3 @@
+# Resolve atomically and resume publication
+
+Every catalog entry must be downloaded, built, and validated successfully before the workflow publishes any new artifact or changes the extension lock. A fixed workflow concurrency group serializes scheduled and manual runs without cancelling work in progress. Publishing immutable GitHub Release assets and pushing Git commits cannot form one transaction, so a release that succeeds before a lock push fails is retained; the failed run reports an error and the next run reuses matching drafts or published assets before completing the lock commits. This favors safe, idempotent recovery over destructive rollback.

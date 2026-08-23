@@ -1,0 +1,31 @@
+{
+  "$schema": "./extensions.schema.json",
+
+  "chromeWebStore": [
+    "bnomihfieiccainjcjblhegjgglakjdd", // 'Improve YouTube!' 🎧
+    "egehpkpgpgooebopjihjmnpejnjafefi", // Better History
+    "pdcpmagijalfljmkmjngeonclgbbannb", // C/C++ DevTools Support (DWARF)
+    "lckanjgmijmafbedllaakclkaicjfmnk", // ClearURLs
+    "ldpochfccmkkmhdbclfhpagapcfdljkj", // Decentraleyes
+    "jeoacafpbcihiomhlakheieifhpjdfeo", // Disconnect
+    "jpbjcnkcffbooppibceonlgknpkniiff", // Global Speed
+    "nmbcckfgobecechfdamananmfnnjbbbd", // Imp Translate
+    "homllehcipjgpbpepcojhgcpfdopjhml", // QuickGo 外链直达
+    "gebbhagfogifgggkldgodflihgfeippi", // Return YouTube Dislike
+    "donbcfbmhbcapadipfkeojnmajbakjdc", // Ruffle - Flash Emulator
+    "mpiodijhokgodhhofbcjdecpffjipkle", // SingleFile
+    "djflhoibgkdhkhhcedjiklpkjnoahfmg", // User-Agent Switcher for Chrome
+    "fjkmabmdepjfammlpliljpnbhleegehm", // WebRTC Control
+    "jinjaccalgkegednnccohejagnlnfdag", // 暴力猴
+    "bpoadfkcbjbfhfodiogcnhhhpibjhbnh", // 沉浸式翻译
+    "pkehgijcmpdhfbdbbnkijodmdjhbjlgp", // 隐私獾
+  ],
+
+  "githubReleases": {
+    // uBlock Origin's Chromium package is distributed as a ZIP rather than a CRX.
+    "ublock-origin": {
+      "repository": "gorhill/uBlock",
+      "asset": "uBlock0_*.chromium.zip",
+    },
+  },
+}

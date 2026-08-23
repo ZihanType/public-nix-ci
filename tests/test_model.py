@@ -1,0 +1,96 @@
+from __future__ import annotations
+
+from pathlib import Path
+import sys
+import tempfile
+import unittest
+
+
+REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(REPOSITORY_ROOT / "scripts"))
+
+from chromium_extensions.model import (  # noqa: E402
+    Catalog,
+    ChangeKind,
+    LockEntry,
+    diff_locks,
+    parse_jsonc,
+    read_lock,
+    render_lock,
+)
+
+
+EXAMPLE_HASH = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+
+
+class JsoncTests(unittest.TestCase):
+    def test_comments_and_trailing_commas_are_supported(self) -> None:
+        self.assertEqual(
+            parse_jsonc(
+                """{
+                  // line comment
+                  "items": ["// is text",],
+                  /* block comment */
+                }"""
+            ),
+            {"items": ["// is text"]},
+        )
+
+    def test_unterminated_block_comment_is_rejected(self) -> None:
+        with self.assertRaisesRegex(ValueError, "unterminated JSONC block comment"):
+            parse_jsonc('{"items": [] /*')
+
+
+class CatalogTests(unittest.TestCase):
+    def test_repository_catalog_parses(self) -> None:
+        catalog = Catalog.read(REPOSITORY_ROOT / "extensions.jsonc")
+        self.assertEqual(len(catalog.chrome_web_store_ids), 17)
+        self.assertEqual(len(catalog.github_releases), 1)
+        self.assertEqual(catalog.github_releases[0].name, "ublock-origin")
+
+    def test_duplicate_store_id_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "extensions.jsonc"
+            extension_id = "a" * 32
+            path.write_text(
+                '{"chromeWebStore":["%s","%s"],"githubReleases":{}}'
+                % (extension_id, extension_id),
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(ValueError, "duplicate"):
+                Catalog.read(path)
+
+
+class LockTests(unittest.TestCase):
+    def entry(self, extension_id: str, version: str = "1.0") -> LockEntry:
+        return LockEntry(
+            extension_id,
+            version,
+            "https://github.com/ZihanType/public-nix-ci/releases/download/test/file.crx",
+            EXAMPLE_HASH,
+        )
+
+    def test_lock_is_rendered_in_id_order(self) -> None:
+        rendered = render_lock([self.entry("b" * 32), self.entry("a" * 32)])
+        self.assertLess(rendered.index('"' + "a" * 32 + '"'), rendered.index('"' + "b" * 32 + '"'))
+
+    def test_diff_order_is_add_update_remove(self) -> None:
+        removed = self.entry("c" * 32)
+        updated_old = self.entry("b" * 32, "1.0")
+        updated_new = self.entry("b" * 32, "2.0")
+        added = self.entry("a" * 32)
+        changes = diff_locks([updated_old, removed], [added, updated_new])
+        self.assertEqual([change.kind for change in changes], [ChangeKind.ADD, ChangeKind.UPDATE, ChangeKind.REMOVE])
+
+    def test_same_version_mutation_is_rejected(self) -> None:
+        old = self.entry("a" * 32)
+        new = LockEntry(old.extension_id, old.version, old.url + "-changed", old.sha256)
+        with self.assertRaisesRegex(ValueError, "without changing version"):
+            diff_locks([old], [new])
+
+    def test_repository_empty_lock_parses(self) -> None:
+        self.assertEqual(read_lock(REPOSITORY_ROOT / "extensions.lock"), ())
+
+
+if __name__ == "__main__":
+    unittest.main()

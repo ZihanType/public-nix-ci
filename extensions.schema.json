@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/ZihanType/public-nix-ci/main/extensions.schema.json",
+  "title": "Chromium extension catalog",
+  "description": "Human-maintained sources resolved into immutable CRX artifacts and extensions.lock.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["chromeWebStore", "githubReleases"],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "chromeWebStore": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/extensionId"
+      }
+    },
+    "githubReleases": {
+      "type": "object",
+      "propertyNames": {
+        "pattern": "^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/githubRelease"
+      }
+    }
+  },
+  "$defs": {
+    "extensionId": {
+      "type": "string",
+      "pattern": "^[a-p]{32}$"
+    },
+    "githubRelease": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["repository"],
+      "properties": {
+        "repository": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$"
+        },
+        "asset": {
+          "description": "Optional case-sensitive glob; omit only when the latest release has exactly one ZIP asset.",
+          "type": "string",
+          "pattern": "^[^/\\\\]+\\.[zZ][iI][pP]$"
+        }
+      }
+    }
+  }
+}

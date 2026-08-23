@@ -1,0 +1,38 @@
+name: update-chromium-extensions
+
+on:
+  schedule:
+    - cron: "15 */4 * * *"
+  workflow_dispatch:
+
+concurrency:
+  # Release publication and generated Git history form one recoverable workflow.
+  # Never cancel a run after it may have created a draft or immutable release.
+  group: update-chromium-extensions
+  cancel-in-progress: false
+
+jobs:
+  update:
+    name: Resolve and publish extensions
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout default branch with generated history
+        uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Run unit tests
+        env:
+          PYTHONDONTWRITEBYTECODE: "1"
+        run: python3 -m unittest discover -s tests -v
+
+      - name: Resolve, publish, and update lock
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PYTHONDONTWRITEBYTECODE: "1"
+        run: python3 scripts/update-chromium-extensions.py
