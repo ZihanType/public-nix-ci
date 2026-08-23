@@ -58,5 +58,11 @@
     "version": "21.1.2",
     "url": "https://github.com/ZihanType/public-nix-ci/releases/download/extension-jeoacafpbcihiomhlakheieifhpjdfeo-v21.1.2/jeoacafpbcihiomhlakheieifhpjdfeo-21.1.2.crx",
     "sha256": "sha256-bqKGFF19zWs5WV9Q3Y9vGcaUZFwlt/LMTcQT9oUH+bI="
+  },
+  {
+    "id": "jinjaccalgkegednnccohejagnlnfdag",
+    "version": "2.48.0",
+    "url": "https://github.com/ZihanType/public-nix-ci/releases/download/extension-jinjaccalgkegednnccohejagnlnfdag-v2.48.0/jinjaccalgkegednnccohejagnlnfdag-2.48.0.crx",
+    "sha256": "sha256-yRTrkG3wgVKXMLPT+1cOWMHpdhXEat3wAmiSD0Z6lc8="
   }
 ]
