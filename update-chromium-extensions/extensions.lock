@@ -18,6 +18,12 @@
     "sha256": "sha256-REPpVx1cCpBUOjw8NWl+NWSZjTR6AGaAFW/ofX3GF60="
   },
   {
+    "id": "cofdbpoegempjloogbagkncekinflcnj",
+    "version": "1.97.0",
+    "url": "https://github.com/ZihanType/public-nix-ci/releases/download/extension-cofdbpoegempjloogbagkncekinflcnj-v1.97.0/cofdbpoegempjloogbagkncekinflcnj-1.97.0.crx",
+    "sha256": "sha256-AeDBtFiTWg/J61RWf2M4S8OjHOMg6XJF2t5wwLkHkpY="
+  },
+  {
     "id": "djflhoibgkdhkhhcedjiklpkjnoahfmg",
     "version": "2.0.2",
     "url": "https://github.com/ZihanType/public-nix-ci/releases/download/extension-djflhoibgkdhkhhcedjiklpkjnoahfmg-v2.0.2/djflhoibgkdhkhhcedjiklpkjnoahfmg-2.0.2.crx",
