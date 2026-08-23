@@ -46,5 +46,11 @@
     "version": "4.0.4",
     "url": "https://github.com/ZihanType/public-nix-ci/releases/download/extension-gebbhagfogifgggkldgodflihgfeippi-v4.0.4/gebbhagfogifgggkldgodflihgfeippi-4.0.4.crx",
     "sha256": "sha256-0ZO+7AY5dcy1AOXPtZ9sSPcj9Wl2RQkE9oOFZq7ESqM="
+  },
+  {
+    "id": "homllehcipjgpbpepcojhgcpfdopjhml",
+    "version": "3.5.0",
+    "url": "https://github.com/ZihanType/public-nix-ci/releases/download/extension-homllehcipjgpbpepcojhgcpfdopjhml-v3.5.0/homllehcipjgpbpepcojhgcpfdopjhml-3.5.0.crx",
+    "sha256": "sha256-PreF6Y1Tmb05DnrR/GrzWjt6AS1eas7d+0jr9qtrfQE="
   }
 ]
