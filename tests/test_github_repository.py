@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 import hashlib
+import json
 import sys
 import unittest
 from typing import Optional
@@ -89,6 +90,32 @@ class GitHubRepositoryTests(unittest.TestCase):
             )
         )
 
+    def test_upload_asset_returns_completed_asset_response(self) -> None:
+        release = ExistingRelease(
+            1,
+            self.artifact.tag,
+            True,
+            False,
+            False,
+            "https://uploads.invalid{?name,label}",
+            (),
+        )
+        response_asset = {
+            "name": self.artifact.asset_name,
+            "state": "uploaded",
+            "digest": "sha256:" + self.artifact.sha256_hex,
+        }
+        with mock.patch.object(
+            self.repository,
+            "_request",
+            return_value=(201, {}, json.dumps(response_asset).encode("utf-8")),
+        ):
+            uploaded_asset = self.repository._upload_asset(  # pylint: disable=protected-access
+                release,
+                self.artifact,
+            )
+        self.assertEqual(uploaded_asset, response_asset)
+
     def test_download_url_is_version_specific(self) -> None:
         self.assertEqual(
             release_download_url("owner/repository", "extension-id-v1.0", "id-1.0.crx"),
@@ -108,6 +135,58 @@ class GitHubRepositoryTests(unittest.TestCase):
         with mock.patch.object(self.repository, "find_release", return_value=release):
             with self.assertRaisesRegex(ValueError, "not immutable"):
                 self.repository.validate_existing(self.artifact)
+
+    def test_upload_response_is_used_when_draft_list_is_stale(self) -> None:
+        self_artifact = self.artifact
+
+        class StaleDraftListRepository(GitHubRepository):
+            def __init__(self) -> None:
+                super().__init__("owner/repository", "test-token")
+                self.draft = ExistingRelease(
+                    1,
+                    self_artifact.tag,
+                    True,
+                    False,
+                    False,
+                    "https://uploads.invalid",
+                    (),
+                )
+                self.asset = {
+                    "name": self_artifact.asset_name,
+                    "state": "uploaded",
+                    "digest": "sha256:" + self_artifact.sha256_hex,
+                }
+
+            def find_release(self, tag: str) -> Optional[ExistingRelease]:
+                # GitHub's draft-list endpoint did not show the just-created
+                # draft immediately after its asset upload in the failed run.
+                return None
+
+            def _create_draft(
+                self, artifact: ReleaseArtifact, target_commitish: str
+            ) -> ExistingRelease:
+                del artifact, target_commitish
+                return self.draft
+
+            def _upload_asset(self, release: ExistingRelease, artifact: ReleaseArtifact):
+                del release, artifact
+                return self.asset
+
+            def _json_request(self, method: str, url: str, **kwargs):
+                if method != "PATCH" or not url.endswith("/releases/1"):
+                    raise AssertionError("unexpected publish request")
+                return {
+                    "id": self.draft.release_id,
+                    "tag_name": self.draft.tag,
+                    "draft": False,
+                    "prerelease": False,
+                    "immutable": True,
+                    "upload_url": self.draft.upload_url,
+                    "assets": [self.asset],
+                }
+
+        repository = StaleDraftListRepository()
+        repository.publish(self.artifact, target_commitish="main")
 
     def test_new_release_is_uploaded_as_draft_then_published(self) -> None:
         class InMemoryRepository(GitHubRepository):
@@ -137,8 +216,13 @@ class GitHubRepositoryTests(unittest.TestCase):
 
             def _upload_asset(
                 self, release: ExistingRelease, artifact: ReleaseArtifact
-            ) -> None:
+            ):
                 self.uploaded = True
+                uploaded_asset = {
+                    "name": artifact.asset_name,
+                    "state": "uploaded",
+                    "digest": "sha256:" + hashlib.sha256(artifact.contents).hexdigest(),
+                }
                 self.state = ExistingRelease(
                     release.release_id,
                     release.tag,
@@ -146,13 +230,9 @@ class GitHubRepositoryTests(unittest.TestCase):
                     False,
                     False,
                     release.upload_url,
-                    (
-                        {
-                            "name": artifact.asset_name,
-                            "digest": "sha256:" + hashlib.sha256(artifact.contents).hexdigest(),
-                        },
-                    ),
+                    (uploaded_asset,),
                 )
+                return uploaded_asset
 
             def _json_request(self, method: str, url: str, **kwargs):
                 self.assert_patch(method, url)

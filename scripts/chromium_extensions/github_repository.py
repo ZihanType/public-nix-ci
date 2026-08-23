@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 import hashlib
 import json
 import time
@@ -258,10 +258,14 @@ class GitHubRepository:
         assert value is not None
         return self._parse_release(value)
 
-    def _upload_asset(self, release: ExistingRelease, artifact: ReleaseArtifact) -> None:
+    def _upload_asset(
+        self,
+        release: ExistingRelease,
+        artifact: ReleaseArtifact,
+    ) -> Mapping[str, object]:
         upload_root = release.upload_url.split("{", 1)[0]
         upload_url = upload_root + "?" + urllib.parse.urlencode({"name": artifact.asset_name})
-        self._request(
+        status, _, contents = self._request(
             "POST",
             upload_url,
             raw_body=artifact.contents,
@@ -270,6 +274,28 @@ class GitHubRepository:
                 "Content-Type": "application/x-chrome-extension",
             },
         )
+        if status != 201:
+            raise RuntimeError(
+                "GitHub asset upload for %s returned HTTP %d" % (artifact.tag, status)
+            )
+        try:
+            uploaded_asset = json.loads(contents.decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError) as error:
+            raise RuntimeError(
+                "GitHub asset upload for %s returned invalid JSON" % artifact.tag
+            ) from error
+        if not isinstance(uploaded_asset, dict):
+            raise RuntimeError(
+                "GitHub asset upload for %s returned a non-object" % artifact.tag
+            )
+        if (
+            uploaded_asset.get("name") != artifact.asset_name
+            or uploaded_asset.get("state") != "uploaded"
+        ):
+            raise RuntimeError(
+                "GitHub did not finish uploading asset %s" % artifact.asset_name
+            )
+        return uploaded_asset
 
     def publish(self, artifact: ReleaseArtifact, *, target_commitish: str) -> None:
         release = self.find_release(artifact.tag)
@@ -287,15 +313,18 @@ class GitHubRepository:
         if not has_asset:
             if not release.draft:
                 raise ValueError("published release %s is missing its immutable asset" % artifact.tag)
-            self._upload_asset(release, artifact)
-            refreshed = self.find_release(artifact.tag)
-            if refreshed is None or not self._validate_existing_assets(
-                refreshed,
+            uploaded_asset = self._upload_asset(release, artifact)
+            # The upload response is the read-after-write result. The draft
+            # list endpoint can briefly omit a just-created draft, as observed
+            # in Actions run 32637477932; depending on that list made a
+            # successful upload look like a failure.
+            release = replace(release, assets=(uploaded_asset,))
+            if not self._validate_existing_assets(
+                release,
                 artifact,
                 allow_missing_draft_asset=False,
             ):
                 raise RuntimeError("uploaded asset verification failed for %s" % artifact.tag)
-            release = refreshed
 
         if release.draft:
             updated = self._json_request(
