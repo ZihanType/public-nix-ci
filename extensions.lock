@@ -4,5 +4,11 @@
     "version": "4.2081",
     "url": "https://github.com/ZihanType/public-nix-ci/releases/download/extension-bnomihfieiccainjcjblhegjgglakjdd-v4.2081/bnomihfieiccainjcjblhegjgglakjdd-4.2081.crx",
     "sha256": "sha256-gcwEVzfNSFQSpBVYMwClKbCq6tXshMBddBt6OQD3yiw="
+  },
+  {
+    "id": "bpoadfkcbjbfhfodiogcnhhhpibjhbnh",
+    "version": "1.32.7",
+    "url": "https://github.com/ZihanType/public-nix-ci/releases/download/extension-bpoadfkcbjbfhfodiogcnhhhpibjhbnh-v1.32.7/bpoadfkcbjbfhfodiogcnhhhpibjhbnh-1.32.7.crx",
+    "sha256": "sha256-jo107L7AYueLq7fru8+26aLA5pgucX7wpyB+cqOwDic="
   }
 ]
