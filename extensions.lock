@@ -34,5 +34,11 @@
     "version": "7.0.0",
     "url": "https://github.com/ZihanType/public-nix-ci/releases/download/extension-egehpkpgpgooebopjihjmnpejnjafefi-v7.0.0/egehpkpgpgooebopjihjmnpejnjafefi-7.0.0.crx",
     "sha256": "sha256-HQ7q3+ceWcCCfdMDXhpYt3WHlqrARnGdnctuZCwDZms="
+  },
+  {
+    "id": "fjkmabmdepjfammlpliljpnbhleegehm",
+    "version": "0.3.5",
+    "url": "https://github.com/ZihanType/public-nix-ci/releases/download/extension-fjkmabmdepjfammlpliljpnbhleegehm-v0.3.5/fjkmabmdepjfammlpliljpnbhleegehm-0.3.5.crx",
+    "sha256": "sha256-nluCzt2TdOa8EyKW64kYxlXY3yjVVKD+ildCPyTJG2c="
   }
 ]
