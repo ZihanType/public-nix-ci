@@ -76,5 +76,11 @@
     "version": "1.26.0",
     "url": "https://github.com/ZihanType/public-nix-ci/releases/download/extension-lckanjgmijmafbedllaakclkaicjfmnk-v1.26.0/lckanjgmijmafbedllaakclkaicjfmnk-1.26.0.crx",
     "sha256": "sha256-rMFzGyrQCJ85p93PDHIy7TU329AZuOjBvuzoeO1Yoxo="
+  },
+  {
+    "id": "ldpochfccmkkmhdbclfhpagapcfdljkj",
+    "version": "3.0.2",
+    "url": "https://github.com/ZihanType/public-nix-ci/releases/download/extension-ldpochfccmkkmhdbclfhpagapcfdljkj-v3.0.2/ldpochfccmkkmhdbclfhpagapcfdljkj-3.0.2.crx",
+    "sha256": "sha256-LVu+9aNFEgFOVL8mJdCrR/YC5n4xr8fZQ2NpAnSj2hQ="
   }
 ]
