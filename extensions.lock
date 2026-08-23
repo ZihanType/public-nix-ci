@@ -100,5 +100,11 @@
     "version": "0.2.5854.1",
     "url": "https://github.com/ZihanType/public-nix-ci/releases/download/extension-pdcpmagijalfljmkmjngeonclgbbannb-v0.2.5854.1/pdcpmagijalfljmkmjngeonclgbbannb-0.2.5854.1.crx",
     "sha256": "sha256-9MfZlRkprMy2AuPLDnPs45Tsr8HiCUQZiH2Vv1S9j84="
+  },
+  {
+    "id": "pkehgijcmpdhfbdbbnkijodmdjhbjlgp",
+    "version": "2026.8.7",
+    "url": "https://github.com/ZihanType/public-nix-ci/releases/download/extension-pkehgijcmpdhfbdbbnkijodmdjhbjlgp-v2026.8.7/pkehgijcmpdhfbdbbnkijodmdjhbjlgp-2026.8.7.crx",
+    "sha256": "sha256-s+9bp6ERdUJfm43voMTTxyJrwTktPPU+dgTYKhEv3yc="
   }
 ]
