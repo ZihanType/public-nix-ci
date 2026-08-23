@@ -82,5 +82,11 @@
     "version": "3.0.2",
     "url": "https://github.com/ZihanType/public-nix-ci/releases/download/extension-ldpochfccmkkmhdbclfhpagapcfdljkj-v3.0.2/ldpochfccmkkmhdbclfhpagapcfdljkj-3.0.2.crx",
     "sha256": "sha256-LVu+9aNFEgFOVL8mJdCrR/YC5n4xr8fZQ2NpAnSj2hQ="
+  },
+  {
+    "id": "mpiodijhokgodhhofbcjdecpffjipkle",
+    "version": "1.22.98",
+    "url": "https://github.com/ZihanType/public-nix-ci/releases/download/extension-mpiodijhokgodhhofbcjdecpffjipkle-v1.22.98/mpiodijhokgodhhofbcjdecpffjipkle-1.22.98.crx",
+    "sha256": "sha256-C9cLguufxQbY4QbQOA6KDC2oeXMPP+gUOdK1qc1sD0E="
   }
 ]
