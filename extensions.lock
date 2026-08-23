@@ -28,5 +28,11 @@
     "version": "0.5.0.65535",
     "url": "https://github.com/ZihanType/public-nix-ci/releases/download/extension-donbcfbmhbcapadipfkeojnmajbakjdc-v0.5.0.65535/donbcfbmhbcapadipfkeojnmajbakjdc-0.5.0.65535.crx",
     "sha256": "sha256-PrwqVY8YbYeY2EcAW28IAIDzg00NzPTkpwEOXe41Avk="
+  },
+  {
+    "id": "egehpkpgpgooebopjihjmnpejnjafefi",
+    "version": "7.0.0",
+    "url": "https://github.com/ZihanType/public-nix-ci/releases/download/extension-egehpkpgpgooebopjihjmnpejnjafefi-v7.0.0/egehpkpgpgooebopjihjmnpejnjafefi-7.0.0.crx",
+    "sha256": "sha256-HQ7q3+ceWcCCfdMDXhpYt3WHlqrARnGdnctuZCwDZms="
   }
 ]
