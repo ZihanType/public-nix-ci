@@ -11,6 +11,8 @@ import re
 import subprocess
 import tempfile
 from typing import List, Mapping, Optional, Sequence, Tuple
+import unicodedata
+import urllib.parse
 
 from .crx3 import (
     build_reproducible_crx3,
@@ -24,6 +26,13 @@ from .sources import ChromeWebStoreClient, HttpClient, PublicGitHubReleaseClient
 
 
 GITHUB_REPOSITORY_RE = re.compile(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+")
+
+# A loose Git ref is created through a sibling `<ref>.lock` file. Capping the
+# complete tag at 250 UTF-8 bytes keeps both names within the common 255-byte
+# filesystem component limit while retaining Unicode extension names.
+MAX_GIT_TAG_BYTES = 250
+RELEASE_TAG_PREFIX = "extension-"
+RELEASE_TAG_VERSION_SEPARATOR = "-v"
 
 
 def sha256_sri(contents: bytes) -> str:
@@ -58,9 +67,107 @@ class Resolution:
         return tuple(sorted((artifact.lock_entry for artifact in self.artifacts), key=lambda entry: entry.extension_id))
 
 
-def _release_identity(extension_id: str, version: str) -> Tuple[str, str, str]:
-    tag = "extension-%s-v%s" % (extension_id, version)
-    title = "%s v%s" % (extension_id, version)
+def _validate_release_tag_collisions(artifacts: Sequence[ResolvedArtifact]) -> None:
+    artifacts_by_tag = {}
+    for artifact in artifacts:
+        previous = artifacts_by_tag.get(artifact.release.tag)
+        if previous is not None and (
+            previous.lock_entry.extension_id != artifact.lock_entry.extension_id
+        ):
+            raise ValueError(
+                "resolved release tag collision %s: %s (%s) and %s (%s)"
+                % (
+                    artifact.release.tag,
+                    previous.lock_entry.name,
+                    previous.lock_entry.extension_id,
+                    artifact.lock_entry.name,
+                    artifact.lock_entry.extension_id,
+                )
+            )
+        artifacts_by_tag[artifact.release.tag] = artifact
+
+
+def _release_name_slug(name: str, version: str) -> str:
+    normalized = unicodedata.normalize("NFKC", name).casefold()
+    pieces: List[str] = []
+    previous_was_separator = False
+    for char in normalized:
+        if char.isalnum():
+            pieces.append(char)
+            previous_was_separator = False
+        elif pieces and not previous_was_separator:
+            pieces.append("-")
+            previous_was_separator = True
+    slug = "".join(pieces).strip("-")
+    if not slug:
+        raise ValueError("extension name tag slug is empty for %r" % name)
+
+    suffix = RELEASE_TAG_VERSION_SEPARATOR + version
+    available_slug_bytes = MAX_GIT_TAG_BYTES - len(
+        (RELEASE_TAG_PREFIX + suffix).encode("utf-8")
+    )
+    if available_slug_bytes <= 0:
+        raise ValueError("extension version leaves no room for a release tag name slug")
+    rendered: List[str] = []
+    rendered_bytes = 0
+    for char in slug:
+        encoded_length = len(char.encode("utf-8"))
+        if rendered_bytes + encoded_length > available_slug_bytes:
+            break
+        rendered.append(char)
+        rendered_bytes += encoded_length
+    truncated = "".join(rendered).rstrip("-")
+    if not truncated:
+        raise ValueError("extension name tag slug is empty after length limiting for %r" % name)
+    return truncated
+
+
+def _tag_from_existing_lock(entry: LockEntry) -> str:
+    path_parts = urllib.parse.urlsplit(entry.url).path.split("/")
+    try:
+        marker = path_parts.index("download")
+        encoded_tag = path_parts[marker + 1]
+    except (ValueError, IndexError) as error:
+        raise ValueError("lock URL has no GitHub Release tag for %s" % entry.extension_id) from error
+    tag = urllib.parse.unquote(encoded_tag)
+    if not tag:
+        raise ValueError("lock URL has an empty GitHub Release tag for %s" % entry.extension_id)
+    return tag
+
+
+def _validate_git_tag(tag: str) -> None:
+    result = subprocess.run(
+        ["git", "check-ref-format", "refs/tags/" + tag],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        check=False,
+    )
+    if result.returncode != 0:
+        detail = result.stderr.strip() or "git check-ref-format rejected it"
+        raise ValueError("invalid generated Git tag %r: %s" % (tag, detail))
+
+
+def _release_identity(
+    name: str,
+    extension_id: str,
+    version: str,
+    *,
+    existing: Optional[LockEntry] = None,
+) -> Tuple[str, str, str]:
+    if existing is not None and existing.extension_id != extension_id:
+        raise ValueError("existing lock entry does not match resolved extension ID")
+    if existing is not None and existing.version == version:
+        # Immutable historical ID tags remain the permanent URL for versions
+        # already present in the lock. Only a future version adopts name tags.
+        tag = _tag_from_existing_lock(existing)
+    else:
+        slug = _release_name_slug(name, version)
+        tag = RELEASE_TAG_PREFIX + slug + RELEASE_TAG_VERSION_SEPARATOR + version
+    if len(tag.encode("utf-8")) > MAX_GIT_TAG_BYTES:
+        raise ValueError("generated Git tag exceeds the %d-byte limit" % MAX_GIT_TAG_BYTES)
+    _validate_git_tag(tag)
+    title = "%s v%s" % (name, version)
     asset_name = "%s-%s.crx" % (extension_id, version)
     return tag, title, asset_name
 
@@ -163,9 +270,16 @@ class Resolver:
         self.web_store = ChromeWebStoreClient(self.http, openssl=openssl)
         self.public_github = PublicGitHubReleaseClient(self.http)
 
-    def _resolve_web_store(self, extension_id: str, chrome_version: str) -> ResolvedArtifact:
+    def _resolve_web_store(
+        self,
+        extension_id: str,
+        chrome_version: str,
+        existing: Optional[LockEntry],
+    ) -> ResolvedArtifact:
         upstream = self.web_store.resolve(extension_id, chrome_version)
-        tag, title, asset_name = _release_identity(extension_id, upstream.version)
+        tag, title, asset_name = _release_identity(
+            upstream.name, extension_id, upstream.version, existing=existing
+        )
         release = ReleaseArtifact(
             tag,
             title,
@@ -181,9 +295,12 @@ class Resolver:
             ),
         )
         lock_entry = LockEntry(
+            upstream.name,
             extension_id,
             upstream.version,
-            release_download_url(self.repository, tag, asset_name),
+            existing.url
+            if existing is not None and existing.version == upstream.version
+            else release_download_url(self.repository, tag, asset_name),
             sha256_sri(upstream.contents),
         )
         return ResolvedArtifact(lock_entry, release)
@@ -192,6 +309,7 @@ class Resolver:
         self,
         source: GitHubReleaseSource,
         temporary_directory: Path,
+        existing_by_id: Mapping[str, LockEntry],
     ) -> Tuple[ResolvedArtifact, Optional[PendingKey]]:
         upstream = self.public_github.resolve_zip(source)
         canonical = canonicalize_extension_zip(upstream.contents)
@@ -205,7 +323,13 @@ class Resolver:
             pending_key = PendingKey(source.name, final_key_path, key_path.read_bytes())
 
         built = build_reproducible_crx3(canonical.zip_bytes, key_path, openssl=self.openssl)
-        tag, title, asset_name = _release_identity(built.extension_id, canonical.version)
+        existing = existing_by_id.get(built.extension_id)
+        tag, title, asset_name = _release_identity(
+            canonical.name,
+            built.extension_id,
+            canonical.version,
+            existing=existing,
+        )
         release = ReleaseArtifact(
             tag,
             title,
@@ -227,14 +351,23 @@ class Resolver:
             ),
         )
         lock_entry = LockEntry(
+            canonical.name,
             built.extension_id,
             canonical.version,
-            release_download_url(self.repository, tag, asset_name),
+            existing.url
+            if existing is not None and existing.version == canonical.version
+            else release_download_url(self.repository, tag, asset_name),
             sha256_sri(built.contents),
         )
         return ResolvedArtifact(lock_entry, release), pending_key
 
-    def resolve(self, catalog: Catalog, temporary_directory: Path) -> Resolution:
+    def resolve(
+        self,
+        catalog: Catalog,
+        temporary_directory: Path,
+        existing_lock: Sequence[LockEntry] = (),
+    ) -> Resolution:
+        existing_by_id = {entry.extension_id: entry for entry in existing_lock}
         chrome_version = (
             self.web_store.latest_stable_chrome_version()
             if catalog.chrome_web_store_ids
@@ -252,14 +385,24 @@ class Resolver:
                     futures.append(
                         (
                             "Chrome Web Store %s" % extension_id,
-                            executor.submit(self._resolve_web_store, extension_id, chrome_version),
+                            executor.submit(
+                                self._resolve_web_store,
+                                extension_id,
+                                chrome_version,
+                                existing_by_id.get(extension_id),
+                            ),
                         )
                     )
                 for source in catalog.github_releases:
                     futures.append(
                         (
                             "GitHub Release %s" % source.name,
-                            executor.submit(self._resolve_github, source, temporary_directory),
+                            executor.submit(
+                                self._resolve_github,
+                                source,
+                                temporary_directory,
+                                existing_by_id,
+                            ),
                         )
                     )
                 for label, future in futures:
@@ -279,6 +422,8 @@ class Resolver:
         duplicate_ids = sorted({extension_id for extension_id in ids if ids.count(extension_id) > 1})
         if duplicate_ids:
             raise ValueError("resolved duplicate extension IDs: %s" % ", ".join(duplicate_ids))
+
+        _validate_release_tag_collisions(artifacts)
         return Resolution(
             tuple(sorted(artifacts, key=lambda artifact: artifact.lock_entry.extension_id)),
             tuple(sorted(pending_keys, key=lambda key: key.source_name)),
@@ -394,12 +539,12 @@ def run_pipeline(options: PipelineOptions) -> Tuple[LockChange, ...]:
             github_token=options.github_token,
             openssl=options.openssl,
         )
-        resolution = resolver.resolve(catalog, Path(directory))
+        resolution = resolver.resolve(catalog, Path(directory), current_lock)
         changes = diff_locks(current_lock, resolution.lock_entries)
 
         if options.dry_run:
             for change in changes:
-                print(change.commit_message)
+                print(change.action_log)
             print(
                 "dry run resolved %d extensions (%d changes, %d new keys)"
                 % (len(resolution.artifacts), len(changes), len(resolution.pending_keys))
@@ -432,6 +577,8 @@ def run_pipeline(options: PipelineOptions) -> Tuple[LockChange, ...]:
             changes,
             git,
         )
+        for change in changes:
+            print(change.action_log)
         print(
             "resolved %d extensions; published artifacts and committed %d lock changes"
             % (len(resolution.artifacts), len(changes))

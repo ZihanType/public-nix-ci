@@ -12,6 +12,7 @@ import hmac
 import io
 import json
 from pathlib import Path, PurePosixPath
+import re
 import stat
 import struct
 import subprocess
@@ -20,7 +21,7 @@ import threading
 from typing import Dict, List, Mapping, Optional, Sequence, Tuple
 import zipfile
 
-from .model import VERSION_RE
+from .model import VERSION_RE, normalize_extension_name
 
 
 CRX_MAGIC = b"Cr24"
@@ -34,6 +35,16 @@ MAX_ARCHIVE_BYTES = 256 * 1024 * 1024
 MAX_UNCOMPRESSED_BYTES = 512 * 1024 * 1024
 MAX_ARCHIVE_FILES = 60_000
 MAX_CRX3_HEADER_BYTES = 1024 * 1024
+
+# Locale message catalogs are tiny in normal extensions. Bounding the one file
+# needed to resolve a display name prevents a highly compressed Web Store CRX
+# from expanding an untrusted messages.json without limit.
+MAX_LOCALIZATION_MESSAGES_BYTES = 1024 * 1024
+
+LOCALIZED_MESSAGE_RE = re.compile(r"__MSG_(.*?)__", re.IGNORECASE)
+PLACEHOLDER_RE = re.compile(r"\$(.*?)\$")
+MESSAGE_NAME_RE = re.compile(r"[A-Za-z0-9_@]+")
+DEFAULT_LOCALE_RE = re.compile(r"[A-Za-z0-9_]+")
 
 # ZIP timestamps cannot represent dates before 1980. A fixed earliest timestamp
 # avoids runner filesystem metadata changing otherwise identical CRX bytes.
@@ -175,6 +186,7 @@ def public_key_der(private_key_path: Path, *, openssl: str = "openssl") -> bytes
 class CanonicalExtension:
     zip_bytes: bytes
     manifest: Mapping[str, object]
+    name: str
     source_root: str
 
     @property
@@ -182,6 +194,112 @@ class CanonicalExtension:
         version = self.manifest["version"]
         assert isinstance(version, str)
         return version
+
+
+@dataclass(frozen=True)
+class ExtensionManifest:
+    """Validated manifest metadata needed by the artifact pipeline."""
+
+    value: Mapping[str, object]
+    name: str
+
+    @property
+    def version(self) -> str:
+        version = self.value["version"]
+        assert isinstance(version, str)
+        return version
+
+
+def _extension_name_from_archive(
+    manifest: Mapping[str, object],
+    archive: zipfile.ZipFile,
+    root: PurePosixPath,
+) -> str:
+    """Resolve manifest name references against the deterministic default locale."""
+
+    raw_name = manifest.get("name")
+    if not isinstance(raw_name, str):
+        raise ValueError("manifest.json contains an invalid name")
+    references = tuple(LOCALIZED_MESSAGE_RE.finditer(raw_name))
+    if not references:
+        return normalize_extension_name(raw_name)
+
+    default_locale = manifest.get("default_locale")
+    if (
+        not isinstance(default_locale, str)
+        or not DEFAULT_LOCALE_RE.fullmatch(default_locale)
+    ):
+        raise ValueError("localized manifest name requires a valid default_locale")
+    messages_path = root / "_locales" / default_locale / "messages.json"
+    try:
+        messages_info = archive.getinfo(messages_path.as_posix())
+    except KeyError as error:
+        raise ValueError(
+            "default locale %s has no messages.json" % default_locale
+        ) from error
+    if messages_info.file_size > MAX_LOCALIZATION_MESSAGES_BYTES:
+        raise ValueError(
+            "default locale messages.json exceeds the %d-byte limit"
+            % MAX_LOCALIZATION_MESSAGES_BYTES
+        )
+    try:
+        messages_value = json.loads(archive.read(messages_info).decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as error:
+        raise ValueError("default locale messages.json is not valid UTF-8 JSON") from error
+    if not isinstance(messages_value, dict):
+        raise ValueError("default locale messages.json must contain an object")
+
+    messages: Dict[str, object] = {}
+    for key, message in messages_value.items():
+        folded_key = key.casefold()
+        # Chromium inserts each catalog item into a lower-cased dictionary in
+        # source order, so the last spelling wins when keys differ only by case.
+        messages[folded_key] = message
+
+    def replace_message(match: re.Match[str]) -> str:
+        key = match.group(1)
+        if not MESSAGE_NAME_RE.fullmatch(key) or key.startswith("@@"):
+            raise ValueError("manifest name contains an invalid localized message reference")
+        message_value = messages.get(key.casefold())
+        if not isinstance(message_value, dict):
+            raise ValueError("default locale has no message %s" % key)
+        message = message_value.get("message")
+        if not isinstance(message, str):
+            raise ValueError("default locale message %s has no string message" % key)
+
+        placeholders_value = message_value.get("placeholders", {})
+        if not isinstance(placeholders_value, dict):
+            raise ValueError("default locale message %s has invalid placeholders" % key)
+        placeholders: Dict[str, str] = {}
+        for placeholder_key, placeholder_value in placeholders_value.items():
+            if not MESSAGE_NAME_RE.fullmatch(placeholder_key):
+                raise ValueError(
+                    "default locale message %s has an invalid placeholder name" % key
+                )
+            if not isinstance(placeholder_value, dict) or not isinstance(
+                placeholder_value.get("content"), str
+            ):
+                raise ValueError(
+                    "default locale message %s has an invalid placeholder %s"
+                    % (key, placeholder_key)
+                )
+            placeholders[placeholder_key.casefold()] = placeholder_value["content"]
+
+        def replace_placeholder(placeholder_match: re.Match[str]) -> str:
+            placeholder_key = placeholder_match.group(1)
+            if not MESSAGE_NAME_RE.fullmatch(placeholder_key):
+                return placeholder_match.group(0)
+            content = placeholders.get(placeholder_key.casefold())
+            if content is None:
+                raise ValueError(
+                    "default locale message %s uses undefined placeholder %s"
+                    % (key, placeholder_key)
+                )
+            return content
+
+        return PLACEHOLDER_RE.sub(replace_placeholder, message)
+
+    return normalize_extension_name(LOCALIZED_MESSAGE_RE.sub(replace_message, raw_name))
 
 
 def _safe_archive_path(name: str) -> PurePosixPath:
@@ -248,6 +366,7 @@ def canonicalize_extension_zip(contents: bytes) -> CanonicalExtension:
         version = manifest_value.get("version")
         if not isinstance(version, str) or not VERSION_RE.fullmatch(version):
             raise ValueError("manifest.json contains an invalid version")
+        extension_name = _extension_name_from_archive(manifest_value, archive, root)
 
         canonical_files: List[Tuple[str, int, bytes]] = []
         for path, info in paths.items():
@@ -280,7 +399,7 @@ def canonicalize_extension_zip(contents: bytes) -> CanonicalExtension:
             rendered.writestr(info, file_contents)
 
     source_root = "." if not root.parts else root.as_posix()
-    return CanonicalExtension(output.getvalue(), manifest_value, source_root)
+    return CanonicalExtension(output.getvalue(), manifest_value, extension_name, source_root)
 
 
 @dataclass(frozen=True)
@@ -509,19 +628,28 @@ def verify_crx3(contents: bytes, *, openssl: str = "openssl") -> ParsedCrx3:
     return parsed
 
 
-def manifest_from_crx3(contents: bytes, *, openssl: str = "openssl") -> Mapping[str, object]:
+def extension_manifest_from_crx3(
+    contents: bytes, *, openssl: str = "openssl"
+) -> ExtensionManifest:
     parsed = verify_crx3(contents, openssl=openssl)
     try:
         with zipfile.ZipFile(io.BytesIO(parsed.zip_bytes)) as archive:
             manifest = json.loads(archive.read("manifest.json").decode("utf-8"))
+            if not isinstance(manifest, dict):
+                raise ValueError("CRX3 manifest.json must contain an object")
+            version = manifest.get("version")
+            if not isinstance(version, str) or not VERSION_RE.fullmatch(version):
+                raise ValueError("CRX3 manifest.json contains an invalid version")
+            name = _extension_name_from_archive(manifest, archive, PurePosixPath())
     except (zipfile.BadZipFile, KeyError, UnicodeDecodeError, json.JSONDecodeError) as error:
         raise ValueError("CRX3 does not contain a valid root manifest.json: %s" % error) from error
-    if not isinstance(manifest, dict):
-        raise ValueError("CRX3 manifest.json must contain an object")
-    version = manifest.get("version")
-    if not isinstance(version, str) or not VERSION_RE.fullmatch(version):
-        raise ValueError("CRX3 manifest.json contains an invalid version")
-    return manifest
+    return ExtensionManifest(manifest, name)
+
+
+def manifest_from_crx3(contents: bytes, *, openssl: str = "openssl") -> Mapping[str, object]:
+    """Return the validated raw manifest for callers that do not need metadata."""
+
+    return extension_manifest_from_crx3(contents, openssl=openssl).value
 
 
 def build_crx3(canonical_zip: bytes, private_key_path: Path, *, openssl: str = "openssl") -> bytes:

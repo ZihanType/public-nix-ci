@@ -13,6 +13,7 @@ import json
 from pathlib import Path
 import re
 from typing import Dict, Iterable, List, Optional, Sequence, Tuple
+import unicodedata
 
 
 EXTENSION_ID_RE = re.compile(r"[a-p]{32}")
@@ -20,6 +21,42 @@ CATALOG_NAME_RE = re.compile(r"[a-z0-9](?:[a-z0-9-]*[a-z0-9])?")
 GITHUB_REPOSITORY_RE = re.compile(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+")
 VERSION_RE = re.compile(r"[0-9]+(?:\.[0-9]+){0,3}")
 SRI_SHA256_RE = re.compile(r"sha256-[A-Za-z0-9+/]{43}=")
+
+# Chrome's manifest `name` contract limits the user-visible extension name to
+# 75 characters. Keeping the limit here makes generated lock entries obey the
+# same contract even when they are constructed outside the archive parser.
+MAX_EXTENSION_NAME_CHARACTERS = 75
+
+# Unicode Bidirectional Algorithm controls can make an untrusted upstream name
+# appear different from the text committed to Git or printed in Actions. These
+# are the bidi controls defined by UAX #9, including the isolate controls.
+BIDI_CONTROL_CHARACTERS = frozenset(
+    "\u061c\u200e\u200f\u202a\u202b\u202c\u202d\u202e\u2066\u2067\u2068\u2069"
+)
+
+
+def normalize_extension_name(value: object) -> str:
+    """Return the single-line display name shared by every human-facing surface."""
+
+    if not isinstance(value, str):
+        raise ValueError("extension manifest name must be a string")
+    if any(unicodedata.category(char) == "Cc" for char in value):
+        raise ValueError("extension manifest name contains a control character")
+    if any(char in BIDI_CONTROL_CHARACTERS for char in value):
+        raise ValueError("extension manifest name contains a bidi formatting control")
+
+    # Chromium's Extension::LoadName collapses whitespace before exposing the
+    # name. Reproducing that normalization keeps lock, Git, Actions, and Release
+    # labels aligned with the browser-visible value.
+    normalized = " ".join(value.split())
+    if not normalized:
+        raise ValueError("extension manifest name must not be empty")
+    if len(normalized) > MAX_EXTENSION_NAME_CHARACTERS:
+        raise ValueError(
+            "extension manifest name exceeds the %d-character limit"
+            % MAX_EXTENSION_NAME_CHARACTERS
+        )
+    return normalized
 
 
 def _remove_jsonc_comments(text: str) -> str:
@@ -199,12 +236,15 @@ class Catalog:
 
 @dataclass(frozen=True)
 class LockEntry:
+    name: str
     extension_id: str
     version: str
     url: str
     sha256: str
 
     def __post_init__(self) -> None:
+        if normalize_extension_name(self.name) != self.name:
+            raise ValueError("lock extension name must already be normalized")
         if not EXTENSION_ID_RE.fullmatch(self.extension_id):
             raise ValueError("invalid lock extension ID: %s" % self.extension_id)
         if not VERSION_RE.fullmatch(self.version):
@@ -222,6 +262,7 @@ class LockEntry:
 
     def as_json(self) -> Dict[str, str]:
         return {
+            "name": self.name,
             "id": self.extension_id,
             "version": self.version,
             "url": self.url,
@@ -242,11 +283,16 @@ def read_lock(path: Path) -> Tuple[LockEntry, ...]:
     for index, item in enumerate(value):
         if not isinstance(item, dict):
             raise ValueError("lock entry %d must be an object" % index)
-        if set(item) != {"id", "version", "url", "sha256"}:
-            raise ValueError("lock entry %d must contain exactly id, version, url, and sha256" % index)
+        if set(item) != {"name", "id", "version", "url", "sha256"}:
+            raise ValueError(
+                "lock entry %d must contain exactly name, id, version, url, and sha256"
+                % index
+            )
         if not all(isinstance(item[field], str) for field in item):
             raise ValueError("lock entry %d contains a non-string field" % index)
-        entry = LockEntry(item["id"], item["version"], item["url"], item["sha256"])
+        entry = LockEntry(
+            item["name"], item["id"], item["version"], item["url"], item["sha256"]
+        )
         if entry.extension_id in seen_ids:
             raise ValueError("duplicate extension ID in lock: %s" % entry.extension_id)
         seen_ids.add(entry.extension_id)
@@ -280,16 +326,31 @@ class LockChange:
     def commit_message(self) -> str:
         if self.kind is ChangeKind.ADD:
             assert self.new is not None
-            return "chore(extensions): add %s at %s" % (self.extension_id, self.new.version)
+            return "chore(chromium): add %s %s" % (self.new.name, self.new.version)
         if self.kind is ChangeKind.UPDATE:
             assert self.old is not None and self.new is not None
-            return "chore(extensions): update %s from %s to %s" % (
-                self.extension_id,
+            return "chore(chromium): update %s to %s" % (self.new.name, self.new.version)
+        assert self.old is not None
+        return "chore(chromium): remove %s" % self.old.name
+
+    @property
+    def action_log(self) -> str:
+        if self.kind is ChangeKind.ADD:
+            assert self.new is not None
+            return "Added %s: %s" % (self.new.name, self.new.version)
+        if self.kind is ChangeKind.UPDATE:
+            assert self.old is not None and self.new is not None
+            if self.old.name == self.new.name:
+                label = self.new.name
+            else:
+                label = "%s -> %s" % (self.old.name, self.new.name)
+            return "Updated %s: %s -> %s" % (
+                label,
                 self.old.version,
                 self.new.version,
             )
         assert self.old is not None
-        return "chore(extensions): remove %s at %s" % (self.extension_id, self.old.version)
+        return "Removed %s: %s" % (self.old.name, self.old.version)
 
 
 def diff_locks(old: Sequence[LockEntry], new: Sequence[LockEntry]) -> Tuple[LockChange, ...]:
@@ -306,7 +367,7 @@ def diff_locks(old: Sequence[LockEntry], new: Sequence[LockEntry]) -> Tuple[Lock
             continue
         if old_entry.version == new_entry.version:
             raise ValueError(
-                "extension %s changed content or URL without changing version %s"
+                "extension %s changed name, content, or URL without changing version %s"
                 % (extension_id, old_entry.version)
             )
         changes.append(LockChange(ChangeKind.UPDATE, extension_id, old_entry, new_entry))

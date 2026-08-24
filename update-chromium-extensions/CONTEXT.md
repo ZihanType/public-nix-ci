@@ -20,10 +20,14 @@ _Avoid_: GitHub extension, converted extension, original extension
 An immutable CRX identified by its extension ID and manifest version and published by this repository for an extension lock to reference.
 _Avoid_: Package, release file, download
 
+**Extension name**:
+The human-readable name declared by an extension artifact's manifest, with a localized message reference resolved through the manifest's default locale when necessary.
+_Avoid_: Catalog name, extension slug
+
 **Extension catalog**:
 The human-maintained `extensions.jsonc` document that declares which upstream extensions the pipeline resolves.
 _Avoid_: Extension list, source list, configuration
 
 **Extension lock**:
-The generated `extensions.lock` document that records exactly the ID, version, download URL, and SHA-256 hash of every resolved extension artifact. It makes no claim that a browser can install or run the artifact.
+The generated `extensions.lock` document that records exactly the name, ID, version, download URL, and SHA-256 hash of every resolved extension artifact. It makes no claim that a browser can install or run the artifact.
 _Avoid_: Catalog, installation manifest, browser configuration

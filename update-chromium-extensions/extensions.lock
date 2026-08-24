@@ -1,113 +1,132 @@
 [
   {
+    "name": "'Improve YouTube!' 🎧 (for YouTube & Videos)",
     "id": "bnomihfieiccainjcjblhegjgglakjdd",
     "version": "4.2081",
     "url": "https://github.com/ZihanType/public-nix-ci/releases/download/extension-bnomihfieiccainjcjblhegjgglakjdd-v4.2081/bnomihfieiccainjcjblhegjgglakjdd-4.2081.crx",
     "sha256": "sha256-gcwEVzfNSFQSpBVYMwClKbCq6tXshMBddBt6OQD3yiw="
   },
   {
+    "name": "Immersive Translate: AI Web, PDF & Video Translator",
     "id": "bpoadfkcbjbfhfodiogcnhhhpibjhbnh",
     "version": "1.32.7",
     "url": "https://github.com/ZihanType/public-nix-ci/releases/download/extension-bpoadfkcbjbfhfodiogcnhhhpibjhbnh-v1.32.7/bpoadfkcbjbfhfodiogcnhhhpibjhbnh-1.32.7.crx",
     "sha256": "sha256-jo107L7AYueLq7fru8+26aLA5pgucX7wpyB+cqOwDic="
   },
   {
+    "name": "uBlock Origin",
     "id": "ccnjcdhodlnppgfcglhmpgfancbdhojh",
     "version": "1.73.0",
     "url": "https://github.com/ZihanType/public-nix-ci/releases/download/extension-ccnjcdhodlnppgfcglhmpgfancbdhojh-v1.73.0/ccnjcdhodlnppgfcglhmpgfancbdhojh-1.73.0.crx",
     "sha256": "sha256-REPpVx1cCpBUOjw8NWl+NWSZjTR6AGaAFW/ofX3GF60="
   },
   {
+    "name": "DeepL: translate and write with AI",
     "id": "cofdbpoegempjloogbagkncekinflcnj",
     "version": "1.97.0",
     "url": "https://github.com/ZihanType/public-nix-ci/releases/download/extension-cofdbpoegempjloogbagkncekinflcnj-v1.97.0/cofdbpoegempjloogbagkncekinflcnj-1.97.0.crx",
     "sha256": "sha256-AeDBtFiTWg/J61RWf2M4S8OjHOMg6XJF2t5wwLkHkpY="
   },
   {
+    "name": "User-Agent Switcher for Chrome",
     "id": "djflhoibgkdhkhhcedjiklpkjnoahfmg",
     "version": "2.0.2",
     "url": "https://github.com/ZihanType/public-nix-ci/releases/download/extension-djflhoibgkdhkhhcedjiklpkjnoahfmg-v2.0.2/djflhoibgkdhkhhcedjiklpkjnoahfmg-2.0.2.crx",
     "sha256": "sha256-91dvkBmxaxmBtcUPIrc1tcyN/DAkyeypaBayZrxxY0Q="
   },
   {
+    "name": "Ruffle - Flash Emulator",
     "id": "donbcfbmhbcapadipfkeojnmajbakjdc",
     "version": "0.5.0.65535",
     "url": "https://github.com/ZihanType/public-nix-ci/releases/download/extension-donbcfbmhbcapadipfkeojnmajbakjdc-v0.5.0.65535/donbcfbmhbcapadipfkeojnmajbakjdc-0.5.0.65535.crx",
     "sha256": "sha256-PrwqVY8YbYeY2EcAW28IAIDzg00NzPTkpwEOXe41Avk="
   },
   {
+    "name": "Better History | Manage, Export, and Delete History",
     "id": "egehpkpgpgooebopjihjmnpejnjafefi",
     "version": "7.0.0",
     "url": "https://github.com/ZihanType/public-nix-ci/releases/download/extension-egehpkpgpgooebopjihjmnpejnjafefi-v7.0.0/egehpkpgpgooebopjihjmnpejnjafefi-7.0.0.crx",
     "sha256": "sha256-HQ7q3+ceWcCCfdMDXhpYt3WHlqrARnGdnctuZCwDZms="
   },
   {
+    "name": "WebRTC Control",
     "id": "fjkmabmdepjfammlpliljpnbhleegehm",
     "version": "0.3.5",
     "url": "https://github.com/ZihanType/public-nix-ci/releases/download/extension-fjkmabmdepjfammlpliljpnbhleegehm-v0.3.5/fjkmabmdepjfammlpliljpnbhleegehm-0.3.5.crx",
     "sha256": "sha256-nluCzt2TdOa8EyKW64kYxlXY3yjVVKD+ildCPyTJG2c="
   },
   {
+    "name": "Return YouTube Dislike",
     "id": "gebbhagfogifgggkldgodflihgfeippi",
     "version": "4.0.4",
     "url": "https://github.com/ZihanType/public-nix-ci/releases/download/extension-gebbhagfogifgggkldgodflihgfeippi-v4.0.4/gebbhagfogifgggkldgodflihgfeippi-4.0.4.crx",
     "sha256": "sha256-0ZO+7AY5dcy1AOXPtZ9sSPcj9Wl2RQkE9oOFZq7ESqM="
   },
   {
+    "name": "QuickGo 外链直达 — 无感知自动跳过*乎、*书、掘*金、C**N、少数派、Gi**e 等网站的安全中心跳转限制",
     "id": "homllehcipjgpbpepcojhgcpfdopjhml",
     "version": "3.5.0",
     "url": "https://github.com/ZihanType/public-nix-ci/releases/download/extension-homllehcipjgpbpepcojhgcpfdopjhml-v3.5.0/homllehcipjgpbpepcojhgcpfdopjhml-3.5.0.crx",
     "sha256": "sha256-PreF6Y1Tmb05DnrR/GrzWjt6AS1eas7d+0jr9qtrfQE="
   },
   {
+    "name": "Disconnect — Tracker Protection",
     "id": "jeoacafpbcihiomhlakheieifhpjdfeo",
     "version": "21.1.2",
     "url": "https://github.com/ZihanType/public-nix-ci/releases/download/extension-jeoacafpbcihiomhlakheieifhpjdfeo-v21.1.2/jeoacafpbcihiomhlakheieifhpjdfeo-21.1.2.crx",
     "sha256": "sha256-bqKGFF19zWs5WV9Q3Y9vGcaUZFwlt/LMTcQT9oUH+bI="
   },
   {
+    "name": "Violentmonkey",
     "id": "jinjaccalgkegednnccohejagnlnfdag",
     "version": "2.48.0",
     "url": "https://github.com/ZihanType/public-nix-ci/releases/download/extension-jinjaccalgkegednnccohejagnlnfdag-v2.48.0/jinjaccalgkegednnccohejagnlnfdag-2.48.0.crx",
     "sha256": "sha256-yRTrkG3wgVKXMLPT+1cOWMHpdhXEat3wAmiSD0Z6lc8="
   },
   {
+    "name": "Global Speed - Video Speed Control",
     "id": "jpbjcnkcffbooppibceonlgknpkniiff",
     "version": "3.4.117",
     "url": "https://github.com/ZihanType/public-nix-ci/releases/download/extension-jpbjcnkcffbooppibceonlgknpkniiff-v3.4.117/jpbjcnkcffbooppibceonlgknpkniiff-3.4.117.crx",
     "sha256": "sha256-taVCSp9TO9ax014Vv7pNGbdVDbUQ3vXuh3drQlTPogM="
   },
   {
+    "name": "ClearURLs",
     "id": "lckanjgmijmafbedllaakclkaicjfmnk",
     "version": "1.26.0",
     "url": "https://github.com/ZihanType/public-nix-ci/releases/download/extension-lckanjgmijmafbedllaakclkaicjfmnk-v1.26.0/lckanjgmijmafbedllaakclkaicjfmnk-1.26.0.crx",
     "sha256": "sha256-rMFzGyrQCJ85p93PDHIy7TU329AZuOjBvuzoeO1Yoxo="
   },
   {
+    "name": "Decentraleyes",
     "id": "ldpochfccmkkmhdbclfhpagapcfdljkj",
     "version": "3.0.2",
     "url": "https://github.com/ZihanType/public-nix-ci/releases/download/extension-ldpochfccmkkmhdbclfhpagapcfdljkj-v3.0.2/ldpochfccmkkmhdbclfhpagapcfdljkj-3.0.2.crx",
     "sha256": "sha256-LVu+9aNFEgFOVL8mJdCrR/YC5n4xr8fZQ2NpAnSj2hQ="
   },
   {
+    "name": "SingleFile",
     "id": "mpiodijhokgodhhofbcjdecpffjipkle",
     "version": "1.22.98",
     "url": "https://github.com/ZihanType/public-nix-ci/releases/download/extension-mpiodijhokgodhhofbcjdecpffjipkle-v1.22.98/mpiodijhokgodhhofbcjdecpffjipkle-1.22.98.crx",
     "sha256": "sha256-C9cLguufxQbY4QbQOA6KDC2oeXMPP+gUOdK1qc1sD0E="
   },
   {
+    "name": "Imp Translate",
     "id": "nmbcckfgobecechfdamananmfnnjbbbd",
     "version": "0.1.4",
     "url": "https://github.com/ZihanType/public-nix-ci/releases/download/extension-nmbcckfgobecechfdamananmfnnjbbbd-v0.1.4/nmbcckfgobecechfdamananmfnnjbbbd-0.1.4.crx",
     "sha256": "sha256-Pdnzm+DHu0GEhy/Xg6M59oBsYke27wZVG8zJkO/iXxU="
   },
   {
+    "name": "C/C++ DevTools Support (DWARF)",
     "id": "pdcpmagijalfljmkmjngeonclgbbannb",
     "version": "0.2.5854.1",
     "url": "https://github.com/ZihanType/public-nix-ci/releases/download/extension-pdcpmagijalfljmkmjngeonclgbbannb-v0.2.5854.1/pdcpmagijalfljmkmjngeonclgbbannb-0.2.5854.1.crx",
     "sha256": "sha256-9MfZlRkprMy2AuPLDnPs45Tsr8HiCUQZiH2Vv1S9j84="
   },
   {
+    "name": "Privacy Badger",
     "id": "pkehgijcmpdhfbdbbnkijodmdjhbjlgp",
     "version": "2026.8.7",
     "url": "https://github.com/ZihanType/public-nix-ci/releases/download/extension-pkehgijcmpdhfbdbbnkijodmdjhbjlgp-v2026.8.7/pkehgijcmpdhfbdbbnkijodmdjhbjlgp-2026.8.7.crx",

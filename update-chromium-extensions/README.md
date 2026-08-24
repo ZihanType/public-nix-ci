@@ -29,18 +29,20 @@ Chrome Web Store entries need only their extension ID. Comments and trailing com
 
 The GitHub map key is a stable local identity. Its signing key lives at `keys/<name>.pem`. `asset` is optional only when the latest non-draft, non-prerelease Release contains exactly one ZIP; otherwise its case-sensitive glob must match exactly one asset.
 
-Versions are never entered manually. The workflow reads `manifest.json` from the current Web Store CRX or latest public GitHub Release ZIP.
+Versions and extension names are never entered manually. The workflow reads `manifest.json` from the current Web Store CRX or latest public GitHub Release ZIP. A localized manifest name is resolved through `default_locale`, then normalized once for the lock, generated Git history, Actions logs, and GitHub Releases; an invalid or missing localized name fails the atomic resolution.
 
 For Web Store requests, the client version is the full version from the `Stable` channel in Google's Chrome for Testing metadata. “Chrome for Testing” names the automation-oriented distribution and metadata service; `Stable` still means the Stable channel, not Beta, Dev, or Canary.
 
 ### Published artifacts
 
-Every extension version uses this permanent interface:
+Every newly resolved extension version uses a human-readable name slug in its permanent tag while retaining the extension ID in the asset name:
 
 ```text
-tag:   extension-<id>-v<version>
+tag:   extension-<name-slug>-v<version>
 asset: <id>-<version>.crx
 ```
+
+The Release title is `<name> v<version>`. Name slugs preserve Unicode letters and numbers, normalize punctuation to hyphens, and are capped at 250 UTF-8 bytes before Git ref validation. An empty slug or a collision between different extensions fails the complete resolution. Versions already present in the lock retain their historical `extension-<id>-v<version>` tag and URL; immutable history is never renamed or republished solely to migrate the tag format.
 
 Web Store CRXs retain their upstream bytes, signature, and ID. GitHub ZIPs are safely unpacked, normalized into a deterministic ZIP, and wrapped in a reproducible CRX3 signed by the source-specific key committed under `keys/`.
 
@@ -50,6 +52,7 @@ The generated lock is strict JSON, sorted by ID, and contains only:
 
 ```json
 {
+  "name": "Example Extension",
   "id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
   "version": "1.2.3",
   "url": "https://github.com/.../aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-1.2.3.crx",
@@ -72,10 +75,20 @@ Every catalog entry must download, build, and validate before publication begins
 Each extension change receives its own commit:
 
 ```text
-chore(extensions): add <id> at <version>
-chore(extensions): update <id> from <old-version> to <new-version>
-chore(extensions): remove <id> at <old-version>
+chore(chromium): add <name> <version>
+chore(chromium): update <name> to <new-version>
+chore(chromium): remove <name>
 ```
+
+Dry runs and successful publishing runs print the same name-based change summary in Actions:
+
+```text
+Added <name>: <version>
+Updated <name>: <old-version> -> <new-version>
+Removed <name>: <version>
+```
+
+When an upstream version also changes its name, the update summary uses `Updated <old-name> -> <new-name>: <old-version> -> <new-version>`.
 
 ### Local verification
 

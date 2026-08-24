@@ -12,7 +12,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-from .crx3 import manifest_from_crx3, parse_crx3, sha256_hex
+from .crx3 import extension_manifest_from_crx3, parse_crx3, sha256_hex
 from .model import GitHubReleaseSource
 
 
@@ -101,6 +101,7 @@ class HttpClient:
 @dataclass(frozen=True)
 class ChromeWebStoreArtifact:
     extension_id: str
+    name: str
     version: str
     contents: bytes
     source_url: str
@@ -154,7 +155,9 @@ class ChromeWebStoreClient:
                         "Chrome Web Store returned extension ID %s for requested ID %s"
                         % (parsed.extension_id, extension_id)
                     )
-                manifest = manifest_from_crx3(downloaded.contents, openssl=self.openssl)
+                manifest = extension_manifest_from_crx3(
+                    downloaded.contents, openssl=self.openssl
+                )
                 break
             except ValueError as error:
                 # Retry the entire download, not just parsing. Only a fresh
@@ -167,11 +170,10 @@ class ChromeWebStoreClient:
                 "Chrome Web Store returned an invalid CRX three times: %s"
                 % last_validation_error
             ) from last_validation_error
-        version = manifest.get("version")
-        assert isinstance(version, str)
         return ChromeWebStoreArtifact(
             extension_id,
-            version,
+            manifest.name,
+            manifest.version,
             downloaded.contents,
             downloaded.effective_url,
             chrome_version,

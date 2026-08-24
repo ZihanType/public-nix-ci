@@ -68,8 +68,14 @@ class CatalogTests(unittest.TestCase):
 
 
 class LockTests(unittest.TestCase):
-    def entry(self, extension_id: str, version: str = "1.0") -> LockEntry:
+    def entry(
+        self,
+        extension_id: str,
+        version: str = "1.0",
+        name: str = "Example",
+    ) -> LockEntry:
         return LockEntry(
+            name,
             extension_id,
             version,
             "https://github.com/ZihanType/public-nix-ci/releases/download/test/file.crx",
@@ -79,6 +85,7 @@ class LockTests(unittest.TestCase):
     def test_lock_is_rendered_in_id_order(self) -> None:
         rendered = render_lock([self.entry("b" * 32), self.entry("a" * 32)])
         self.assertLess(rendered.index('"' + "a" * 32 + '"'), rendered.index('"' + "b" * 32 + '"'))
+        self.assertLess(rendered.index('"name"'), rendered.index('"id"'))
 
     def test_diff_order_is_add_update_remove(self) -> None:
         removed = self.entry("c" * 32)
@@ -90,9 +97,38 @@ class LockTests(unittest.TestCase):
 
     def test_same_version_mutation_is_rejected(self) -> None:
         old = self.entry("a" * 32)
-        new = LockEntry(old.extension_id, old.version, old.url + "-changed", old.sha256)
+        new = LockEntry(old.name, old.extension_id, old.version, old.url + "-changed", old.sha256)
         with self.assertRaisesRegex(ValueError, "without changing version"):
             diff_locks([old], [new])
+
+    def test_same_version_name_change_is_rejected(self) -> None:
+        old = self.entry("a" * 32, name="Old Name")
+        new = self.entry("a" * 32, name="New Name")
+        with self.assertRaisesRegex(ValueError, "without changing version"):
+            diff_locks([old], [new])
+
+    def test_legacy_lock_without_name_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "extensions.lock"
+            path.write_text(
+                '[{"id":"%s","version":"1.0","url":"https://example.invalid/a.crx",'
+                '"sha256":"%s"}]\n' % ("a" * 32, EXAMPLE_HASH),
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(ValueError, "exactly name, id, version, url, and sha256"):
+                read_lock(path)
+
+    def test_lock_name_must_already_be_normalized(self) -> None:
+        with self.assertRaisesRegex(ValueError, "normalized"):
+            self.entry("a" * 32, name="  Example   Extension  ")
+
+    def test_lock_name_rejects_bidi_controls(self) -> None:
+        with self.assertRaisesRegex(ValueError, "bidi formatting control"):
+            self.entry("a" * 32, name="Visible\u202eHidden")
+
+    def test_lock_name_rejects_more_than_75_characters(self) -> None:
+        with self.assertRaisesRegex(ValueError, "75-character limit"):
+            self.entry("a" * 32, name="a" * 76)
 
     def test_empty_lock_parses(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

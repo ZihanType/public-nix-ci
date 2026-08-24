@@ -84,6 +84,7 @@ class SourceTests(unittest.TestCase):
         chrome_version = client.latest_stable_chrome_version()
         artifact = client.resolve(self.built.extension_id, chrome_version)
         self.assertEqual(chrome_version, "152.0.7977.54")
+        self.assertEqual(artifact.name, "Example")
         self.assertEqual(artifact.version, "2.3.4")
         self.assertEqual(artifact.request_parameters["os"], "linux")
         self.assertEqual(artifact.request_parameters["arch"], "x64")
