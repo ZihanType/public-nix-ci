@@ -97,9 +97,9 @@
   },
   {
     "id": "nmbcckfgobecechfdamananmfnnjbbbd",
-    "version": "0.1.3",
-    "url": "https://github.com/ZihanType/public-nix-ci/releases/download/extension-nmbcckfgobecechfdamananmfnnjbbbd-v0.1.3/nmbcckfgobecechfdamananmfnnjbbbd-0.1.3.crx",
-    "sha256": "sha256-hUbUm+fmKqIFeVEdapPqz9282wfe0Zc6qF0XgdbfqvY="
+    "version": "0.1.4",
+    "url": "https://github.com/ZihanType/public-nix-ci/releases/download/extension-nmbcckfgobecechfdamananmfnnjbbbd-v0.1.4/nmbcckfgobecechfdamananmfnnjbbbd-0.1.4.crx",
+    "sha256": "sha256-Pdnzm+DHu0GEhy/Xg6M59oBsYke27wZVG8zJkO/iXxU="
   },
   {
     "id": "pdcpmagijalfljmkmjngeonclgbbannb",
