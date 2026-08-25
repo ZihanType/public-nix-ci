@@ -1,0 +1,3 @@
+# Identify future extension release tags by extension ID
+
+Future extension versions use `extension-<id>-v<version>` tags because an extension artifact's stable identity is its extension ID and manifest version; the human-readable extension name remains visible in commit messages, the extension lock, Actions logs, and Release titles. Versions already recorded in the extension lock retain their immutable tag and URL, including `extension-imp-translate-v0.1.5`, while removing and later re-adding that artifact at the same version may publish an ID-tagged Release instead of searching historical name-tagged Releases. This supersedes ADR-0008 and restores ADR-0003's tag naming decision without changing its immutable, versioned artifact contract.

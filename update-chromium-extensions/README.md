@@ -35,14 +35,14 @@ For Web Store requests, the client version is the full version from the `Stable`
 
 ### Published artifacts
 
-Every newly resolved extension version uses a human-readable name slug in its permanent tag while retaining the extension ID in the asset name:
+Every newly resolved extension version uses its stable extension ID in both its permanent tag and asset name:
 
 ```text
-tag:   extension-<name-slug>-v<version>
+tag:   extension-<id>-v<version>
 asset: <id>-<version>.crx
 ```
 
-The Release title is `<name> v<version>`. Name slugs preserve Unicode letters and numbers, normalize punctuation to hyphens, and are capped at 250 UTF-8 bytes before Git ref validation. An empty slug or a collision between different extensions fails the complete resolution. Versions already present in the lock retain their historical `extension-<id>-v<version>` tag and URL; immutable history is never renamed or republished solely to migrate the tag format.
+The Release title remains the human-readable `<name> v<version>`, while the tag uses the extension artifact's stable ID and version identity. Tags must not exceed 250 UTF-8 bytes and are validated as Git refs. Versions already present in the lock retain their historical tag and URL, including name-based tags created under the previous policy; immutable history is never renamed or republished solely to migrate the tag format.
 
 Web Store CRXs retain their upstream bytes, signature, and ID. GitHub ZIPs are safely unpacked, normalized into a deterministic ZIP, and wrapped in a reproducible CRX3 signed by the source-specific key committed under `keys/`.
 

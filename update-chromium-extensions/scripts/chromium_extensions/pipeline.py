@@ -11,7 +11,6 @@ import re
 import subprocess
 import tempfile
 from typing import List, Mapping, Optional, Sequence, Tuple
-import unicodedata
 import urllib.parse
 
 from .crx3 import (
@@ -29,7 +28,7 @@ GITHUB_REPOSITORY_RE = re.compile(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+")
 
 # A loose Git ref is created through a sibling `<ref>.lock` file. Capping the
 # complete tag at 250 UTF-8 bytes keeps both names within the common 255-byte
-# filesystem component limit while retaining Unicode extension names.
+# filesystem component limit.
 MAX_GIT_TAG_BYTES = 250
 RELEASE_TAG_PREFIX = "extension-"
 RELEASE_TAG_VERSION_SEPARATOR = "-v"
@@ -65,61 +64,6 @@ class Resolution:
     @property
     def lock_entries(self) -> Tuple[LockEntry, ...]:
         return tuple(sorted((artifact.lock_entry for artifact in self.artifacts), key=lambda entry: entry.extension_id))
-
-
-def _validate_release_tag_collisions(artifacts: Sequence[ResolvedArtifact]) -> None:
-    artifacts_by_tag = {}
-    for artifact in artifacts:
-        previous = artifacts_by_tag.get(artifact.release.tag)
-        if previous is not None and (
-            previous.lock_entry.extension_id != artifact.lock_entry.extension_id
-        ):
-            raise ValueError(
-                "resolved release tag collision %s: %s (%s) and %s (%s)"
-                % (
-                    artifact.release.tag,
-                    previous.lock_entry.name,
-                    previous.lock_entry.extension_id,
-                    artifact.lock_entry.name,
-                    artifact.lock_entry.extension_id,
-                )
-            )
-        artifacts_by_tag[artifact.release.tag] = artifact
-
-
-def _release_name_slug(name: str, version: str) -> str:
-    normalized = unicodedata.normalize("NFKC", name).casefold()
-    pieces: List[str] = []
-    previous_was_separator = False
-    for char in normalized:
-        if char.isalnum():
-            pieces.append(char)
-            previous_was_separator = False
-        elif pieces and not previous_was_separator:
-            pieces.append("-")
-            previous_was_separator = True
-    slug = "".join(pieces).strip("-")
-    if not slug:
-        raise ValueError("extension name tag slug is empty for %r" % name)
-
-    suffix = RELEASE_TAG_VERSION_SEPARATOR + version
-    available_slug_bytes = MAX_GIT_TAG_BYTES - len(
-        (RELEASE_TAG_PREFIX + suffix).encode("utf-8")
-    )
-    if available_slug_bytes <= 0:
-        raise ValueError("extension version leaves no room for a release tag name slug")
-    rendered: List[str] = []
-    rendered_bytes = 0
-    for char in slug:
-        encoded_length = len(char.encode("utf-8"))
-        if rendered_bytes + encoded_length > available_slug_bytes:
-            break
-        rendered.append(char)
-        rendered_bytes += encoded_length
-    truncated = "".join(rendered).rstrip("-")
-    if not truncated:
-        raise ValueError("extension name tag slug is empty after length limiting for %r" % name)
-    return truncated
 
 
 def _tag_from_existing_lock(entry: LockEntry) -> str:
@@ -158,12 +102,11 @@ def _release_identity(
     if existing is not None and existing.extension_id != extension_id:
         raise ValueError("existing lock entry does not match resolved extension ID")
     if existing is not None and existing.version == version:
-        # Immutable historical ID tags remain the permanent URL for versions
-        # already present in the lock. Only a future version adopts name tags.
+        # An immutable historical tag remains the permanent URL for a version
+        # already present in the lock, including the short-lived name-tag era.
         tag = _tag_from_existing_lock(existing)
     else:
-        slug = _release_name_slug(name, version)
-        tag = RELEASE_TAG_PREFIX + slug + RELEASE_TAG_VERSION_SEPARATOR + version
+        tag = RELEASE_TAG_PREFIX + extension_id + RELEASE_TAG_VERSION_SEPARATOR + version
     if len(tag.encode("utf-8")) > MAX_GIT_TAG_BYTES:
         raise ValueError("generated Git tag exceeds the %d-byte limit" % MAX_GIT_TAG_BYTES)
     _validate_git_tag(tag)
@@ -423,7 +366,6 @@ class Resolver:
         if duplicate_ids:
             raise ValueError("resolved duplicate extension IDs: %s" % ", ".join(duplicate_ids))
 
-        _validate_release_tag_collisions(artifacts)
         return Resolution(
             tuple(sorted(artifacts, key=lambda artifact: artifact.lock_entry.extension_id)),
             tuple(sorted(pending_keys, key=lambda key: key.source_name)),

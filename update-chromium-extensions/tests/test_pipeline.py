@@ -11,13 +11,10 @@ COMPONENT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(COMPONENT_ROOT / "scripts"))
 
 from chromium_extensions.model import LockEntry, diff_locks, read_lock  # noqa: E402
-from chromium_extensions.github_repository import ReleaseArtifact  # noqa: E402
 from chromium_extensions.pipeline import (  # noqa: E402
     GitWorkingTree,
-    ResolvedArtifact,
     _commit_lock_changes,
     _release_identity,
-    _validate_release_tag_collisions,
 )
 
 
@@ -92,44 +89,40 @@ class PipelineCommitTests(unittest.TestCase):
 class ReleaseIdentityTests(unittest.TestCase):
     extension_id = "a" * 32
 
-    def test_release_uses_name_tag_title_and_id_asset(self) -> None:
+    def test_release_uses_id_tag_name_title_and_id_asset(self) -> None:
         tag, title, asset = _release_identity(
             "C/C++ DevTools Support (DWARF)", self.extension_id, "1.2.4"
         )
-        self.assertEqual(tag, "extension-c-c-devtools-support-dwarf-v1.2.4")
+        self.assertEqual(tag, "extension-%s-v1.2.4" % self.extension_id)
         self.assertEqual(title, "C/C++ DevTools Support (DWARF) v1.2.4")
         self.assertEqual(asset, "%s-1.2.4.crx" % self.extension_id)
 
-    def test_release_tag_keeps_unicode_letters(self) -> None:
-        tag, _, _ = _release_identity("隐私獾", self.extension_id, "1.0")
-        self.assertEqual(tag, "extension-隐私獾-v1.0")
+    def test_same_name_uses_distinct_id_tags(self) -> None:
+        first, _, _ = _release_identity("Same Name", "a" * 32, "1.0")
+        second, _, _ = _release_identity("Same Name", "b" * 32, "1.0")
+        self.assertEqual(first, "extension-%s-v1.0" % ("a" * 32))
+        self.assertEqual(second, "extension-%s-v1.0" % ("b" * 32))
 
-    def test_release_tag_is_capped_at_250_utf8_bytes(self) -> None:
-        tag, _, _ = _release_identity("𐐀" * 75, self.extension_id, "1.0")
-        self.assertLessEqual(len(tag.encode("utf-8")), 250)
-        self.assertTrue(tag.endswith("-v1.0"))
-        self.assertLess(tag.count("𐐨"), 75)
+    def test_release_tag_rejects_more_than_250_bytes(self) -> None:
+        with self.assertRaisesRegex(ValueError, "exceeds the 250-byte limit"):
+            _release_identity("Example", self.extension_id, "1" * 220)
 
-    def test_release_tag_rejects_an_empty_slug(self) -> None:
-        with self.assertRaisesRegex(ValueError, "slug is empty"):
-            _release_identity("+++", self.extension_id, "1.0")
-
-    def test_existing_same_version_keeps_legacy_tag(self) -> None:
+    def test_existing_same_version_keeps_historical_name_tag(self) -> None:
         existing = LockEntry(
             "Example",
             self.extension_id,
             "1.0",
             "https://github.com/owner/repository/releases/download/"
-            "extension-%s-v1.0/%s-1.0.crx" % (self.extension_id, self.extension_id),
+            "extension-example-v1.0/%s-1.0.crx" % self.extension_id,
             EXAMPLE_HASH,
         )
         tag, title, _ = _release_identity(
             "Example", self.extension_id, "1.0", existing=existing
         )
-        self.assertEqual(tag, "extension-%s-v1.0" % self.extension_id)
+        self.assertEqual(tag, "extension-example-v1.0")
         self.assertEqual(title, "Example v1.0")
 
-    def test_future_version_uses_name_tag(self) -> None:
+    def test_future_version_uses_id_tag(self) -> None:
         existing = LockEntry(
             "Example",
             self.extension_id,
@@ -141,26 +134,7 @@ class ReleaseIdentityTests(unittest.TestCase):
         tag, _, _ = _release_identity(
             "Example", self.extension_id, "2.0", existing=existing
         )
-        self.assertEqual(tag, "extension-example-v2.0")
-
-    def test_name_tag_collision_reports_both_extensions(self) -> None:
-        artifacts = []
-        for name, extension_id in (("Same Name", "a" * 32), ("Same-Name", "b" * 32)):
-            tag, title, asset = _release_identity(name, extension_id, "1.0")
-            entry = LockEntry(
-                name,
-                extension_id,
-                "1.0",
-                "https://github.com/owner/repository/releases/download/%s/%s" % (tag, asset),
-                EXAMPLE_HASH,
-            )
-            release = ReleaseArtifact(tag, title, asset, b"contents", "notes")
-            artifacts.append(ResolvedArtifact(entry, release))
-        with self.assertRaisesRegex(
-            ValueError,
-            r"Same Name \(%s\).*Same-Name \(%s\)" % ("a" * 32, "b" * 32),
-        ):
-            _validate_release_tag_collisions(artifacts)
+        self.assertEqual(tag, "extension-%s-v2.0" % self.extension_id)
 
 
 class GitWorkingTreeTests(unittest.TestCase):
