@@ -16,9 +16,9 @@
   {
     "name": "uBlock Origin",
     "id": "ccnjcdhodlnppgfcglhmpgfancbdhojh",
-    "version": "1.73.0",
-    "url": "https://github.com/ZihanType/public-nix-ci/releases/download/extension-ccnjcdhodlnppgfcglhmpgfancbdhojh-v1.73.0/ccnjcdhodlnppgfcglhmpgfancbdhojh-1.73.0.crx",
-    "sha256": "sha256-REPpVx1cCpBUOjw8NWl+NWSZjTR6AGaAFW/ofX3GF60="
+    "version": "1.74.0",
+    "url": "https://github.com/ZihanType/public-nix-ci/releases/download/extension-ccnjcdhodlnppgfcglhmpgfancbdhojh-v1.74.0/ccnjcdhodlnppgfcglhmpgfancbdhojh-1.74.0.crx",
+    "sha256": "sha256-0u9w/qvpKZQiaL+0cmUwagFUhHRymBFtRAy+poailcI="
   },
   {
     "name": "DeepL: translate and write with AI",
