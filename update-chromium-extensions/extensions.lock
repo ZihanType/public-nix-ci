@@ -114,9 +114,9 @@
   {
     "name": "Imp Translate",
     "id": "nmbcckfgobecechfdamananmfnnjbbbd",
-    "version": "0.1.5",
-    "url": "https://github.com/ZihanType/public-nix-ci/releases/download/extension-imp-translate-v0.1.5/nmbcckfgobecechfdamananmfnnjbbbd-0.1.5.crx",
-    "sha256": "sha256-Tn8BhUTvA5rVno/dwOTYh4+jSXsPQ/PAE4B60jWQ+5g="
+    "version": "0.1.6",
+    "url": "https://github.com/ZihanType/public-nix-ci/releases/download/extension-nmbcckfgobecechfdamananmfnnjbbbd-v0.1.6/nmbcckfgobecechfdamananmfnnjbbbd-0.1.6.crx",
+    "sha256": "sha256-kuQC4zevmz+0dvhkdpps3WSS/MCz/4Ftd2KRD+dn7NQ="
   },
   {
     "name": "C/C++ DevTools Support (DWARF)",
