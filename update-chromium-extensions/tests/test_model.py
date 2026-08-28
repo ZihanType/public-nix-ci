@@ -23,7 +23,7 @@ from chromium_extensions.model import (  # noqa: E402
 EXAMPLE_HASH = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
 # This is an independent oracle for the checked-in catalog: keep it in sync when
 # intentionally adding or removing Chrome Web Store extensions.
-EXPECTED_CHROME_WEB_STORE_EXTENSION_COUNT = 18
+EXPECTED_CHROME_WEB_STORE_EXTENSION_COUNT = 19
 
 
 class JsoncTests(unittest.TestCase):
