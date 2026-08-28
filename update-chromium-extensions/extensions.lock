@@ -105,6 +105,13 @@
     "sha256": "sha256-LVu+9aNFEgFOVL8mJdCrR/YC5n4xr8fZQ2NpAnSj2hQ="
   },
   {
+    "name": "Playwright Extension",
+    "id": "mmlmfjhmonkocbjadbfplnigmagldckm",
+    "version": "0.3.0",
+    "url": "https://github.com/ZihanType/public-nix-ci/releases/download/extension-mmlmfjhmonkocbjadbfplnigmagldckm-v0.3.0/mmlmfjhmonkocbjadbfplnigmagldckm-0.3.0.crx",
+    "sha256": "sha256-7oJXLD2iY/Vn4PUWfLXa0jdvzw8kjIwVTTzH57poJAs="
+  },
+  {
     "name": "SingleFile",
     "id": "mpiodijhokgodhhofbcjdecpffjipkle",
     "version": "1.22.98",
