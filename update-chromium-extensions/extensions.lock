@@ -49,6 +49,13 @@
     "sha256": "sha256-HQ7q3+ceWcCCfdMDXhpYt3WHlqrARnGdnctuZCwDZms="
   },
   {
+    "name": "ClearURLs",
+    "id": "elfjleddmmgablekjdgoppndbhcgjhfn",
+    "version": "1.27.3",
+    "url": "https://github.com/ZihanType/public-nix-ci/releases/download/extension-elfjleddmmgablekjdgoppndbhcgjhfn-v1.27.3/elfjleddmmgablekjdgoppndbhcgjhfn-1.27.3.crx",
+    "sha256": "sha256-aW5xTy9emrHEsrYthxR+g/uzZVunw4g+5rCxSLpMaTQ="
+  },
+  {
     "name": "WebRTC Control",
     "id": "fjkmabmdepjfammlpliljpnbhleegehm",
     "version": "0.3.5",
