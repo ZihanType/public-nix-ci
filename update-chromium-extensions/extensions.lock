@@ -9,9 +9,9 @@
   {
     "name": "Immersive Translate: AI Web, PDF & Video Translator",
     "id": "bpoadfkcbjbfhfodiogcnhhhpibjhbnh",
-    "version": "1.32.7",
-    "url": "https://github.com/ZihanType/public-nix-ci/releases/download/extension-bpoadfkcbjbfhfodiogcnhhhpibjhbnh-v1.32.7/bpoadfkcbjbfhfodiogcnhhhpibjhbnh-1.32.7.crx",
-    "sha256": "sha256-jo107L7AYueLq7fru8+26aLA5pgucX7wpyB+cqOwDic="
+    "version": "1.32.10",
+    "url": "https://github.com/ZihanType/public-nix-ci/releases/download/extension-bpoadfkcbjbfhfodiogcnhhhpibjhbnh-v1.32.10/bpoadfkcbjbfhfodiogcnhhhpibjhbnh-1.32.10.crx",
+    "sha256": "sha256-Vatu1XmKtMsrgVxDWqPmo5xep4ZWb81R4qPpjOukfpU="
   },
   {
     "name": "uBlock Origin",
