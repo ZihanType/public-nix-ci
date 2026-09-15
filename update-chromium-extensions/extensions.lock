@@ -93,9 +93,9 @@
   {
     "name": "Global Speed - Video Speed Control",
     "id": "jpbjcnkcffbooppibceonlgknpkniiff",
-    "version": "3.4.118",
-    "url": "https://github.com/ZihanType/public-nix-ci/releases/download/extension-jpbjcnkcffbooppibceonlgknpkniiff-v3.4.118/jpbjcnkcffbooppibceonlgknpkniiff-3.4.118.crx",
-    "sha256": "sha256-EiO8mFL4POoq4DY2njiGu6OUEzrkqPvMXS7GlCsviCY="
+    "version": "3.4.119",
+    "url": "https://github.com/ZihanType/public-nix-ci/releases/download/extension-jpbjcnkcffbooppibceonlgknpkniiff-v3.4.119/jpbjcnkcffbooppibceonlgknpkniiff-3.4.119.crx",
+    "sha256": "sha256-qrzjYHg/4CdZEYORpA2d3PYuW8T8HHTOntSRV/oCFE8="
   },
   {
     "name": "Decentraleyes",
