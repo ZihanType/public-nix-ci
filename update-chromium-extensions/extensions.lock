@@ -86,9 +86,9 @@
   {
     "name": "Violentmonkey",
     "id": "jinjaccalgkegednnccohejagnlnfdag",
-    "version": "2.48.0",
-    "url": "https://github.com/ZihanType/public-nix-ci/releases/download/extension-jinjaccalgkegednnccohejagnlnfdag-v2.48.0/jinjaccalgkegednnccohejagnlnfdag-2.48.0.crx",
-    "sha256": "sha256-yRTrkG3wgVKXMLPT+1cOWMHpdhXEat3wAmiSD0Z6lc8="
+    "version": "2.49.0",
+    "url": "https://github.com/ZihanType/public-nix-ci/releases/download/extension-jinjaccalgkegednnccohejagnlnfdag-v2.49.0/jinjaccalgkegednnccohejagnlnfdag-2.49.0.crx",
+    "sha256": "sha256-vKQBgKYzpTOSQH0RPwFAWJf8PNa0JVktGf/TmMO5Qj4="
   },
   {
     "name": "Global Speed - Video Speed Control",
