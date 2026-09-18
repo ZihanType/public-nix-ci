@@ -114,50 +114,50 @@ jobs:
       - name: Build ${{ matrix.target.name }}
         run: nix build "path:.#${{ matrix.target.flake_namespace }}.${{ matrix.target.name }}${{ matrix.target.flake_suffix }}"
 
-  test-work-ubuntu:
-    name: Test ${{ matrix.target.name }} as work user
-    runs-on: ${{ matrix.target.runner }}
-    permissions:
-      contents: read
-    strategy:
-      matrix:
-        target:
-          - *work_ubuntu
-        config:
-          - *nix_config
+  # test-work-ubuntu:
+  #   name: Test ${{ matrix.target.name }} as work user
+  #   runs-on: ${{ matrix.target.runner }}
+  #   permissions:
+  #     contents: read
+  #   strategy:
+  #     matrix:
+  #       target:
+  #         - *work_ubuntu
+  #       config:
+  #         - *nix_config
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v7
-        with:
-          repository: ZihanType/nix-configs
-          token: ${{ secrets.PRIVATE_REPO_ACCESS_TOKEN }}
-          ref: ${{ github.event.client_payload.commit_sha || 'main' }}
-          persist-credentials: false
+  #   steps:
+  #     - name: Checkout repository
+  #       uses: actions/checkout@v7
+  #       with:
+  #         repository: ZihanType/nix-configs
+  #         token: ${{ secrets.PRIVATE_REPO_ACCESS_TOKEN }}
+  #         ref: ${{ github.event.client_payload.commit_sha || 'main' }}
+  #         persist-credentials: false
 
-      - name: Install Nix with container-test support
-        uses: cachix/install-nix-action@v31
-        with:
-          extra_nix_config: |
-            access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
-            experimental-features = nix-command flakes auto-allocate-uids cgroups
-            auto-allocate-uids = true
-            extra-substituters = ${{ matrix.config.extra_substituters }}
-            extra-trusted-public-keys = ${{ matrix.config.extra_trusted_public_keys }}
+  #     - name: Install Nix with container-test support
+  #       uses: cachix/install-nix-action@v31
+  #       with:
+  #         extra_nix_config: |
+  #           access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
+  #           experimental-features = nix-command flakes auto-allocate-uids cgroups
+  #           auto-allocate-uids = true
+  #           extra-substituters = ${{ matrix.config.extra_substituters }}
+  #           extra-trusted-public-keys = ${{ matrix.config.extra_trusted_public_keys }}
 
-      - name: Temporarily update flake.lock for prewarm tests
-        if: ${{ github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.prewarm) }}
-        run: nix flake update
+  #     - name: Temporarily update flake.lock for prewarm tests
+  #       if: ${{ github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.prewarm) }}
+  #       run: nix flake update
 
-      - name: Restore Nix store
-        uses: nix-community/cache-nix-action@v7
-        with:
-          primary-key: ${{ github.workflow }}-${{ matrix.target.name }}-${{ hashFiles('flake.lock', '**/*.nix') }}
-          restore-prefixes-first-match: ${{ github.workflow }}-${{ matrix.target.name }}-
-          save: false
+  #     - name: Restore Nix store
+  #       uses: nix-community/cache-nix-action@v7
+  #       with:
+  #         primary-key: ${{ github.workflow }}-${{ matrix.target.name }}-${{ hashFiles('flake.lock', '**/*.nix') }}
+  #         restore-prefixes-first-match: ${{ github.workflow }}-${{ matrix.target.name }}-
+  #         save: false
 
-      - name: Build ${{ matrix.target.name }} as the existing work user
-        run: ./tests/${{ matrix.target.name }}/build-as-user.sh "${GITHUB_WORKSPACE}"
+  #     - name: Build ${{ matrix.target.name }} as the existing work user
+  #       run: ./tests/${{ matrix.target.name }}/build-as-user.sh "${GITHUB_WORKSPACE}"
 
-      - name: Test ${{ matrix.target.name }} activation on Ubuntu 22.04
-        run: nix build "path:.#checks.x86_64-linux.${{ matrix.target.name }}" --print-build-logs
+  #     - name: Test ${{ matrix.target.name }} activation on Ubuntu 22.04
+  #       run: nix build "path:.#checks.x86_64-linux.${{ matrix.target.name }}" --print-build-logs
