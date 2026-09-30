@@ -79,8 +79,8 @@ jobs:
             access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
             extra-substituters = ${{ matrix.config.extra_substituters }}
             extra-trusted-public-keys = ${{ matrix.config.extra_trusted_public_keys }}
-            keep-derivations = true
-            keep-outputs = true
+            keep-derivations = false
+            keep-outputs = false
 
       - name: Temporarily update flake.lock for prewarm builds
         if: ${{ github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.prewarm) }}
