@@ -135,8 +135,8 @@
   {
     "name": "Privacy Badger",
     "id": "pkehgijcmpdhfbdbbnkijodmdjhbjlgp",
-    "version": "2026.9.15",
-    "url": "https://github.com/ZihanType/public-nix-ci/releases/download/extension-pkehgijcmpdhfbdbbnkijodmdjhbjlgp-v2026.9.15/pkehgijcmpdhfbdbbnkijodmdjhbjlgp-2026.9.15.crx",
-    "sha256": "sha256-0AQMcKB2kRKHE9z2kug7Ndxst5k9lu0rErq3VF/h+4o="
+    "version": "2026.9.15.1",
+    "url": "https://github.com/ZihanType/public-nix-ci/releases/download/extension-pkehgijcmpdhfbdbbnkijodmdjhbjlgp-v2026.9.15.1/pkehgijcmpdhfbdbbnkijodmdjhbjlgp-2026.9.15.1.crx",
+    "sha256": "sha256-llMAZOfeQ+SHuWJJrlzI42cmSKtmYN99nOI5yAd9l9w="
   }
 ]
