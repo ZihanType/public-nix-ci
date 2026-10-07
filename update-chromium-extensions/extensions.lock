@@ -37,9 +37,9 @@
   {
     "name": "Ruffle - Flash Emulator",
     "id": "donbcfbmhbcapadipfkeojnmajbakjdc",
-    "version": "0.6.0.65535",
-    "url": "https://github.com/ZihanType/public-nix-ci/releases/download/extension-donbcfbmhbcapadipfkeojnmajbakjdc-v0.6.0.65535/donbcfbmhbcapadipfkeojnmajbakjdc-0.6.0.65535.crx",
-    "sha256": "sha256-s9jkPiZiCGdktk+37dOT/1YcqFGNMyqhFwSv3qXI2fg="
+    "version": "0.7.1.65535",
+    "url": "https://github.com/ZihanType/public-nix-ci/releases/download/extension-donbcfbmhbcapadipfkeojnmajbakjdc-v0.7.1.65535/donbcfbmhbcapadipfkeojnmajbakjdc-0.7.1.65535.crx",
+    "sha256": "sha256-YHi3VKJNCaWGd3ygLOHK+8kmHT89G5LgpZsAoxGbOqw="
   },
   {
     "name": "Better History | Manage, Export, and Delete History",
