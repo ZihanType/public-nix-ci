@@ -6,7 +6,8 @@ on:
   repository_dispatch:
     types: [build-nix-cache]
   schedule:
-    - cron: "0 */4 * * *"
+    # Use minute 37 to avoid top-of-hour scheduling congestion.
+    - cron: "37 */4 * * *"
   workflow_dispatch:
     inputs:
       prewarm:

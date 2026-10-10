@@ -2,7 +2,8 @@ name: cleanup-action-cache
 
 on:
   schedule:
-    - cron: "0 2 * * *"
+    # Use minute 37 to avoid top-of-hour scheduling congestion.
+    - cron: "37 2 * * *"
   workflow_dispatch:
 
 concurrency:
