@@ -114,9 +114,9 @@
   {
     "name": "SingleFile",
     "id": "mpiodijhokgodhhofbcjdecpffjipkle",
-    "version": "1.31.0",
-    "url": "https://github.com/ZihanType/public-nix-ci/releases/download/extension-mpiodijhokgodhhofbcjdecpffjipkle-v1.31.0/mpiodijhokgodhhofbcjdecpffjipkle-1.31.0.crx",
-    "sha256": "sha256-oin9I6Ud+o19BrN2eL9kh5FIl+1OotRqKLWNj0zpZfA="
+    "version": "1.31.1",
+    "url": "https://github.com/ZihanType/public-nix-ci/releases/download/extension-mpiodijhokgodhhofbcjdecpffjipkle-v1.31.1/mpiodijhokgodhhofbcjdecpffjipkle-1.31.1.crx",
+    "sha256": "sha256-D8rj7uVxbQT2AgBZRqEgRBXAr+kn+4cAEKvHvlKYgGQ="
   },
   {
     "name": "Imp Translate",
