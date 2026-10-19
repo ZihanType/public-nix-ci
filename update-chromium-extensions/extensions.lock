@@ -23,9 +23,9 @@
   {
     "name": "DeepL: translate and write with AI",
     "id": "cofdbpoegempjloogbagkncekinflcnj",
-    "version": "1.103.0",
-    "url": "https://github.com/ZihanType/public-nix-ci/releases/download/extension-cofdbpoegempjloogbagkncekinflcnj-v1.103.0/cofdbpoegempjloogbagkncekinflcnj-1.103.0.crx",
-    "sha256": "sha256-aad/oRbffn20odmm7vlhg44OkYzv4lajXq4ORKiQ/fs="
+    "version": "1.104.2",
+    "url": "https://github.com/ZihanType/public-nix-ci/releases/download/extension-cofdbpoegempjloogbagkncekinflcnj-v1.104.2/cofdbpoegempjloogbagkncekinflcnj-1.104.2.crx",
+    "sha256": "sha256-+pFxxHhQLlgl153eokm4IDTNITdC8jZOMB48a2OFiOE="
   },
   {
     "name": "User-Agent Switcher for Chrome",
