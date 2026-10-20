@@ -1,0 +1,12 @@
+{
+  "aarch64-linux": {
+    "sha256": "sha256-Awe3ndJWX7C6w63S7e4QzrKjwgcSAOZriE4ZxM1I/0g=",
+    "url": "https://github.com/ZihanType/public-nix-ci/releases/download/wechat-4.1.13.26-aarch64-0307b79dd2565fb0bac3add2edee10ceb2a3c2071200e66b884e19c4cd48ff48/WeChatLinux_4.1.13.26_aarch64.AppImage",
+    "version": "4.1.13.26"
+  },
+  "x86_64-linux": {
+    "sha256": "sha256-RSYYC8qYASh5FZmvEi/0eVACpXFaUQ9qZUgOK+aHQkQ=",
+    "url": "https://github.com/ZihanType/public-nix-ci/releases/download/wechat-4.1.13.26-x86_64-4526180bca980128791599af122ff4795002a5715a510f6a65480e2be6874244/WeChatLinux_4.1.13.26_x86_64.AppImage",
+    "version": "4.1.13.26"
+  }
+}
