@@ -1,0 +1,45 @@
+name: update-wechat
+
+on:
+  schedule:
+    # 北京时间每天 08:23，避开整点调度高峰。
+    - cron: "23 0 * * *"
+  workflow_dispatch:
+
+concurrency:
+  # 发布和索引推送可恢复；不取消已经开始发布的任务。
+  group: update-wechat
+  cancel-in-progress: false
+
+jobs:
+  update:
+    name: 镜像微信 Linux 安装包
+    runs-on: ubuntu-26.04
+    timeout-minutes: 45
+    permissions:
+      contents: write
+    defaults:
+      run:
+        working-directory: update-wechat
+    env:
+      PYTHONDONTWRITEBYTECODE: "1"
+
+    steps:
+      - name: 检出默认分支
+        uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: 准备跨架构解包工具
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y squashfs-tools
+
+      - name: 测试微信镜像组件
+        run: python3 -m unittest discover -s tests -v
+
+      - name: 校验、发布并更新索引
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 -u scripts/update-wechat.py
