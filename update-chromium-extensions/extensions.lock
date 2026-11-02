@@ -65,9 +65,9 @@
   {
     "name": "Return YouTube Dislike",
     "id": "gebbhagfogifgggkldgodflihgfeippi",
-    "version": "4.0.5",
-    "url": "https://github.com/ZihanType/public-nix-ci/releases/download/extension-gebbhagfogifgggkldgodflihgfeippi-v4.0.5/gebbhagfogifgggkldgodflihgfeippi-4.0.5.crx",
-    "sha256": "sha256-orlCwWL0GeALQYCMxrHd71wpOWNVupLk0VrtQcxYtUk="
+    "version": "4.1.2",
+    "url": "https://github.com/ZihanType/public-nix-ci/releases/download/extension-gebbhagfogifgggkldgodflihgfeippi-v4.1.2/gebbhagfogifgggkldgodflihgfeippi-4.1.2.crx",
+    "sha256": "sha256-Yq0WeKBYfVE8nLiJ1Qskd9YEpoZAYGvqFKqpuKMc1uY="
   },
   {
     "name": "QuickGo 外链直达 — 无感知自动跳过*乎、*书、掘*金、C**N、少数派、Gi**e 等网站的安全中心跳转限制",
