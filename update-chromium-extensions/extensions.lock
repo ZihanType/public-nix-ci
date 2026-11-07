@@ -35,6 +35,13 @@
     "sha256": "sha256-91dvkBmxaxmBtcUPIrc1tcyN/DAkyeypaBayZrxxY0Q="
   },
   {
+    "name": "TablissNG",
+    "id": "dlaogejjiafeobgofajdlkkhjlignalk",
+    "version": "1.8.1",
+    "url": "https://github.com/ZihanType/public-nix-ci/releases/download/extension-dlaogejjiafeobgofajdlkkhjlignalk-v1.8.1/dlaogejjiafeobgofajdlkkhjlignalk-1.8.1.crx",
+    "sha256": "sha256-hnnBKifQM9BJjG2Z05RP0B6o8Nlb53YHv2wCZj1lwag="
+  },
+  {
     "name": "Ruffle - Flash Emulator",
     "id": "donbcfbmhbcapadipfkeojnmajbakjdc",
     "version": "0.7.1.65535",
