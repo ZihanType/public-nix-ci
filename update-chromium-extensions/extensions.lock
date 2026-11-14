@@ -77,6 +77,13 @@
     "sha256": "sha256-7Yos4N+2GIpAZtyQfbrEb0NWEw30UC/Du9zHqWWxE4M="
   },
   {
+    "name": "ChatGPT",
+    "id": "hehggadaopoacecdllhhajmbjkdcmajg",
+    "version": "1.26.1102.11740",
+    "url": "https://github.com/ZihanType/public-nix-ci/releases/download/extension-hehggadaopoacecdllhhajmbjkdcmajg-v1.26.1102.11740/hehggadaopoacecdllhhajmbjkdcmajg-1.26.1102.11740.crx",
+    "sha256": "sha256-2FdVFNU1nfcn71fKag+YGMJCZ1Hk7xULCATBfwQ0BWY="
+  },
+  {
     "name": "QuickGo 外链直达 — 无感知自动跳过*乎、*书、掘*金、C**N、少数派、Gi**e 等网站的安全中心跳转限制",
     "id": "homllehcipjgpbpepcojhgcpfdopjhml",
     "version": "3.5.0",
