@@ -14,6 +14,8 @@ import urllib.request
 CHUNK_SIZE = 1024 * 1024
 MAX_DOWNLOAD_SIZE = 2 * 1024 * 1024 * 1024
 USER_AGENT = "public-nix-ci-wechat-mirror/1"
+# 每 30 秒报告一次下载量，区分 CI 网络缓慢与后续安装包解析停滞。
+PROGRESS_INTERVAL = 30
 
 
 class HTTPSRedirectHandler(urllib.request.HTTPRedirectHandler):
@@ -41,6 +43,8 @@ def download(
     opener = urllib.request.build_opener(HTTPSRedirectHandler())
     for attempt in range(attempts):
         try:
+            started = last_report = time.monotonic()
+            print(f"下载 {destination.name}，第 {attempt + 1}/{attempts} 次尝试", flush=True)
             request = urllib.request.Request(url, headers=request_headers)
             with opener.open(request, timeout=60) as response, destination.open("wb") as out:
                 if response.status != 200:
@@ -57,8 +61,21 @@ def download(
                         raise ValueError("下载文件超过 2 GiB")
                     out.write(chunk)
                     digest.update(chunk)
+                    now = time.monotonic()
+                    if now - last_report >= PROGRESS_INTERVAL:
+                        print(
+                            f"下载 {destination.name}：{size}/{expected_size or '未知'} 字节，"
+                            f"已用时 {now - started:.1f} 秒",
+                            flush=True,
+                        )
+                        last_report = now
                 if size == 0 or (expected_size is not None and size != expected_size):
                     raise OSError(f"下载不完整：收到 {size} 字节，预期 {expected_size}")
+                print(
+                    f"下载完成 {destination.name}：{size} 字节，"
+                    f"耗时 {time.monotonic() - started:.1f} 秒",
+                    flush=True,
+                )
                 return digest.hexdigest()
         except urllib.error.HTTPError as error:
             destination.unlink(missing_ok=True)

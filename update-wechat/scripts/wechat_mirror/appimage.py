@@ -127,4 +127,5 @@ def inspect_appimage(path: Path, architecture: Architecture) -> str:
 def resolve(architecture: Architecture, directory: Path) -> Artifact:
     path = directory / f"WeChatLinux_{architecture.name}.AppImage"
     digest = download(architecture.source_url, path)
+    print(f"开始解包校验 {architecture.system}……", flush=True)
     return Artifact(architecture, inspect_appimage(path, architecture), digest, path)

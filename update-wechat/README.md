@@ -19,7 +19,7 @@
 | `x86_64-linux` | `WeChatLinux_x86_64.AppImage` |
 | `aarch64-linux` | `WeChatLinux_arm64.AppImage` |
 
-下载地址前缀为 `https://dldir1v6.qq.com/weixin/Universal/Linux/`。每天完整下载两个文件并计算 SHA-256，不以 HTTP 元数据代替内容比较。
+下载地址前缀为 `https://dldir1v6.qq.com/weixin/Universal/Linux/`。每天完整下载两个文件并计算 SHA-256，不以 HTTP 元数据代替内容比较。日志记录每次下载尝试、每 30 秒的已下载字节数、下载完成耗时，以及开始解包的时间，便于区分网络缓慢与解析停滞。
 
 通过解包读取实际安装包中的完整版本，并校验处理器架构；不运行下载的程序，也不把官网网页显示的简略版本当作完整版本。无法唯一确定完整版本时任务失败。
 
