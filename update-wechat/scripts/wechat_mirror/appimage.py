@@ -5,8 +5,10 @@ from __future__ import annotations
 import mmap
 from pathlib import Path
 import re
+import shutil
 import struct
 import subprocess
+import tarfile
 import tempfile
 
 from .download import download
@@ -68,23 +70,54 @@ def extract_version(binary, desktop: bytes) -> str:
     return version
 
 
+def unsquashfs(command, *, stdout=subprocess.PIPE, timeout=180):
+    try:
+        return subprocess.run(
+            command, stdout=stdout, stderr=subprocess.PIPE, check=True, timeout=timeout,
+        ).stdout
+    except subprocess.CalledProcessError as error:
+        details = error.stderr.decode(errors="replace").strip()
+        raise RuntimeError(
+            f"AppImage 解包失败（退出码 {error.returncode}，命令 {command!r}）：{details}"
+        ) from error
+
+
+def read_payload_binary(command, binary_file) -> None:
+    # 新版把主程序放入内嵌 tar；使用临时文件，避免将整个归档载入内存。
+    with tempfile.TemporaryFile() as payload_file:
+        unsquashfs(command + ["wechat-payload.tar"], stdout=payload_file)
+        payload_file.seek(0)
+        try:
+            with tarfile.open(fileobj=payload_file, mode="r:") as archive:
+                candidates = [
+                    member for member in archive if member.name in {"wechat", "./wechat"}
+                ]
+                if len(candidates) != 1 or not candidates[0].isfile():
+                    raise ValueError("wechat-payload.tar 中缺少唯一的普通文件主程序")
+                # 只读取指定的普通文件，不执行程序、不跟随链接、不展开归档路径。
+                with archive.extractfile(candidates[0]) as source:
+                    shutil.copyfileobj(source, binary_file)
+        except tarfile.TarError as error:
+            raise ValueError(f"无法读取 wechat-payload.tar 归档：{error}") from error
+
+
 def inspect_appimage(path: Path, architecture: Architecture) -> str:
     with path.open("rb") as source:
         validate_elf(source.read(64), architecture)
         with mmap.mmap(source.fileno(), 0, access=mmap.ACCESS_READ) as contents:
             offset = squashfs_offset(contents)
     command = [
-        "unsquashfs", "-no-progress", "-processors", "2", "-o", str(offset), "-cat",
-        str(path.resolve()),
+        "unsquashfs", "-no-progress", "-processors", "2", "-o", str(offset),
     ]
-    desktop = subprocess.run(
-        command + ["wechat.desktop"], check=True, capture_output=True, timeout=60
-    ).stdout
+    files = unsquashfs(command + ["-ls", str(path.resolve())], timeout=60).splitlines()
+    command += ["-cat", str(path.resolve())]
+    desktop = unsquashfs(command + ["wechat.desktop"], timeout=60)
     with tempfile.TemporaryFile() as binary_file:
-        subprocess.run(
-            command + ["opt/wechat/wechat"],
-            stdout=binary_file, stderr=subprocess.PIPE, check=True, timeout=180,
-        )
+        # -ls 使用默认目录 squashfs-root 作为前缀；旧包没有内嵌归档。
+        if b"squashfs-root/wechat-payload.tar" in files:
+            read_payload_binary(command, binary_file)
+        else:
+            unsquashfs(command + ["opt/wechat/wechat"], stdout=binary_file)
         binary_file.seek(0)
         validate_elf(binary_file.read(64), architecture)
         with mmap.mmap(binary_file.fileno(), 0, access=mmap.ACCESS_READ) as binary:
