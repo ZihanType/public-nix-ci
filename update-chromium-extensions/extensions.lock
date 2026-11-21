@@ -114,9 +114,9 @@
   {
     "name": "SingleFile",
     "id": "mpiodijhokgodhhofbcjdecpffjipkle",
-    "version": "1.39.0",
-    "url": "https://github.com/ZihanType/public-nix-ci/releases/download/extension-mpiodijhokgodhhofbcjdecpffjipkle-v1.39.0/mpiodijhokgodhhofbcjdecpffjipkle-1.39.0.crx",
-    "sha256": "sha256-LaX+s9XT/3Ryb5t0R7jmlBRyokzWv3uKpqQjPBIMCWw="
+    "version": "1.40.0",
+    "url": "https://github.com/ZihanType/public-nix-ci/releases/download/extension-mpiodijhokgodhhofbcjdecpffjipkle-v1.40.0/mpiodijhokgodhhofbcjdecpffjipkle-1.40.0.crx",
+    "sha256": "sha256-P/+30TvO1r2C7YmPOWCskbuOk+aIHxK9UThdaxGkomA="
   },
   {
     "name": "Imp Translate: Bilingual AI Page Translator",
