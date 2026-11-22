@@ -58,9 +58,9 @@
   {
     "name": "ClearURLs",
     "id": "elfjleddmmgablekjdgoppndbhcgjhfn",
-    "version": "1.27.3",
-    "url": "https://github.com/ZihanType/public-nix-ci/releases/download/extension-elfjleddmmgablekjdgoppndbhcgjhfn-v1.27.3/elfjleddmmgablekjdgoppndbhcgjhfn-1.27.3.crx",
-    "sha256": "sha256-aW5xTy9emrHEsrYthxR+g/uzZVunw4g+5rCxSLpMaTQ="
+    "version": "1.28.0",
+    "url": "https://github.com/ZihanType/public-nix-ci/releases/download/extension-elfjleddmmgablekjdgoppndbhcgjhfn-v1.28.0/elfjleddmmgablekjdgoppndbhcgjhfn-1.28.0.crx",
+    "sha256": "sha256-TZWdK2gdxadZDRXVD1hXOqx5zd9p2jJlclUzTl2dpM0="
   },
   {
     "name": "WebRTC Control",
