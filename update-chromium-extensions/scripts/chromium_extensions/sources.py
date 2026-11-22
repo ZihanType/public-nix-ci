@@ -114,6 +114,20 @@ class Download:
     content_type: str
 
 
+class _SourceArchiveConnection(http.client.HTTPSConnection):
+    def putheader(self, header: str, *values: str) -> None:
+        # GitHub 源码归档重定向到此 CDN；其 close 响应可能在 ZIP 完成前断开。
+        # 保持连接直到响应读完，urllib 的响应上下文仍会关闭本次连接。
+        if self.host == "codeload.github.com" and header.lower() == "connection":
+            values = ("keep-alive",)
+        super().putheader(header, *values)
+
+
+class _SourceArchiveHandler(urllib.request.HTTPSHandler):
+    def https_open(self, request: urllib.request.Request):
+        return self.do_open(_SourceArchiveConnection, request)
+
+
 class HttpClient:
     def __init__(self, *, github_token: Optional[str] = None, retries: int = 3) -> None:
         self.github_token = github_token
@@ -125,10 +139,12 @@ class HttpClient:
         *,
         headers: Optional[Mapping[str, str]] = None,
         maximum_bytes: int = MAX_DOWNLOAD_BYTES,
+        opener: Optional[urllib.request.OpenerDirector] = None,
     ) -> Download:
         request_headers = {"User-Agent": USER_AGENT, "Accept-Encoding": "identity"}
         if headers:
             request_headers.update(headers)
+        open_request = urllib.request.urlopen if opener is None else opener.open
 
         partial_contents = bytearray()
         request_url = url
@@ -168,7 +184,7 @@ class HttpClient:
                             attempt_headers.pop(name)
             request = urllib.request.Request(request_url, headers=attempt_headers)
             try:
-                with urllib.request.urlopen(request, timeout=60) as response:
+                with open_request(request, timeout=60) as response:
                     response_url = response.geturl()
                     response_status = response.getcode()
                     segment_bytes = _content_length(response.headers, url)
@@ -336,9 +352,13 @@ class HttpClient:
         return value
 
     def download_public_asset(self, url: str) -> Download:
-        # Public browser_download_url responses intentionally omit Authorization,
-        # so a token cannot leak across GitHub's redirect/CDN boundary.
+        # 公开附件匿名下载，避免凭据跨 GitHub 重定向或 CDN 边界。
         return self._request(url)
+
+    def download_public_source_archive(self, url: str) -> Download:
+        # 源码也保持匿名访问，沿用相同的长度、资源上限与续传校验。
+        opener = urllib.request.build_opener(_SourceArchiveHandler())
+        return self._request(url, opener=opener)
 
 
 @dataclass(frozen=True)
@@ -429,8 +449,8 @@ class GitHubZipArtifact:
     source_name: str
     repository: str
     release_tag: str
-    asset_name: str
-    asset_url: str
+    archive_name: str
+    archive_url: str
     contents: bytes
 
     @property
@@ -448,43 +468,51 @@ class PublicGitHubReleaseClient:
         if release.get("draft") is True or release.get("prerelease") is True:
             raise ValueError("GitHub latest endpoint returned a draft or prerelease for %s" % source.name)
         tag = release.get("tag_name")
-        assets = release.get("assets")
         if not isinstance(tag, str) or not tag:
             raise ValueError("GitHub release for %s has no tag" % source.name)
-        if not isinstance(assets, list):
-            raise ValueError("GitHub release for %s has no asset list" % source.name)
-
-        candidates = []
-        for asset in assets:
-            if not isinstance(asset, dict):
-                continue
-            name = asset.get("name")
-            url = asset.get("browser_download_url")
-            if not isinstance(name, str) or not isinstance(url, str):
-                continue
-            if source.asset_glob is None:
-                matches = name.lower().endswith(".zip")
-            else:
-                matches = fnmatch.fnmatchcase(name, source.asset_glob)
-            if matches:
-                candidates.append((name, url))
-
-        if len(candidates) != 1:
-            selector = source.asset_glob or "the only ZIP asset"
-            names = ", ".join(sorted(name for name, _ in candidates)) or "none"
-            raise ValueError(
-                "GitHub source %s selector %r must match exactly one asset; matched %s"
-                % (source.name, selector, names)
-            )
-        asset_name, asset_url = candidates[0]
-        downloaded = self.http.download_public_asset(asset_url)
+        if source.source_archive:
+            archive_url = release.get("zipball_url")
+            if not isinstance(archive_url, str) or not archive_url:
+                raise ValueError("GitHub release for %s has no source ZIP URL" % source.name)
+            archive_name = "%s-source.zip" % tag
+        else:
+            assets = release.get("assets")
+            if not isinstance(assets, list):
+                raise ValueError("GitHub release for %s has no asset list" % source.name)
+            candidates = []
+            for asset in assets:
+                if not isinstance(asset, dict):
+                    continue
+                name = asset.get("name")
+                url = asset.get("browser_download_url")
+                if not isinstance(name, str) or not isinstance(url, str):
+                    continue
+                if source.asset_glob is None:
+                    matches = name.lower().endswith(".zip")
+                else:
+                    matches = fnmatch.fnmatchcase(name, source.asset_glob)
+                if matches:
+                    candidates.append((name, url))
+            if len(candidates) != 1:
+                selector = source.asset_glob or "the only ZIP asset"
+                names = ", ".join(sorted(name for name, _ in candidates)) or "none"
+                raise ValueError(
+                    "GitHub source %s selector %r must match exactly one asset; matched %s"
+                    % (source.name, selector, names)
+                )
+            archive_name, archive_url = candidates[0]
+        downloaded = (
+            self.http.download_public_source_archive(archive_url)
+            if source.source_archive
+            else self.http.download_public_asset(archive_url)
+        )
         if not downloaded.contents.startswith(b"PK"):
-            raise ValueError("GitHub asset %s is not a ZIP archive" % asset_name)
+            raise ValueError("GitHub download %s is not a ZIP archive" % archive_name)
         return GitHubZipArtifact(
             source.name,
             source.repository,
             tag,
-            asset_name,
-            asset_url,
+            archive_name,
+            archive_url,
             downloaded.contents,
         )

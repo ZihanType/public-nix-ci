@@ -42,6 +42,78 @@ def make_source_zip(
 
 
 class CanonicalZipTests(unittest.TestCase):
+    def test_source_selection_recurses_and_excludes_other_manifests(self) -> None:
+        source = self.source_archive({
+            "manifest.json": '{"name":"Example","version":"1"}',
+            "core/script.js": "script",
+            "core/nested/helper.js": "helper",
+            "core-other/excluded.js": "excluded",
+            "tests/manifest.json": "{}",
+        })
+        canonical = canonicalize_extension_zip(
+            source, include_paths=("manifest.json", "core", "core/script.js")
+        )
+        with zipfile.ZipFile(io.BytesIO(canonical.zip_bytes)) as archive:
+            self.assertEqual(archive.namelist(), [
+                "core/nested/helper.js", "core/script.js", "manifest.json",
+            ])
+        self.assertEqual(canonical.source_root, "repo-sha")
+        with self.assertRaisesRegex(ValueError, "exactly one extension manifest"):
+            canonicalize_extension_zip(source, include_paths=("manifest.json", "tests"))
+
+    def source_archive(self, files: dict[str, str]) -> bytes:
+        output = io.BytesIO()
+        with zipfile.ZipFile(output, "w") as archive:
+            for path, contents in files.items():
+                archive.writestr("repo-sha/" + path, contents)
+        return output.getvalue()
+
+    def test_source_selection_requires_each_path_and_manifest(self) -> None:
+        source = self.source_archive({"manifest.json": '{"name":"Example","version":"1"}', "core/a.js": "a"})
+        for includes, message in [
+            (("manifest.json", "missing"), "matched no files"),
+            (("manifest.json", "core/*"), "matched no files"),
+            (("core",), "exactly one extension manifest"),
+            ((), "non-empty include"),
+        ]:
+            with self.subTest(includes=includes), self.assertRaisesRegex(ValueError, message):
+                canonicalize_extension_zip(source, include_paths=includes)
+
+    def test_source_name_cannot_use_an_excluded_locale(self) -> None:
+        source = self.source_archive({
+            "manifest.json": json.dumps({"version": "1", "name": "__MSG_name__", "default_locale": "en"}),
+            "_locales/en/messages.json": '{"name":{"message":"Example"}}',
+        })
+        with self.assertRaisesRegex(ValueError, "has no messages.json"):
+            canonicalize_extension_zip(source, include_paths=("manifest.json",))
+        canonical = canonicalize_extension_zip(source, include_paths=("manifest.json", "_locales"))
+        self.assertEqual(canonical.name, "Example")
+
+    def test_source_selection_cannot_silently_drop_files_outside_extension_root(self) -> None:
+        source = self.source_archive({
+            "extension/manifest.json": '{"name":"Example","version":"1"}',
+            "README.md": "selected",
+        })
+        with self.assertRaisesRegex(ValueError, "outside extension root"):
+            canonicalize_extension_zip(source, include_paths=("extension", "README.md"))
+
+    def test_source_selection_still_rejects_unsafe_excluded_entries(self) -> None:
+        source = self.source_archive({
+            "manifest.json": '{"name":"Example","version":"1"}',
+            "../outside": "excluded",
+        })
+        with self.assertRaisesRegex(ValueError, "unsafe path"):
+            canonicalize_extension_zip(source, include_paths=("manifest.json",))
+        output = io.BytesIO()
+        with zipfile.ZipFile(output, "w") as archive:
+            archive.writestr("repo-sha/manifest.json", '{"name":"Example","version":"1"}')
+            link = zipfile.ZipInfo("repo-sha/excluded-link")
+            link.create_system = 3
+            link.external_attr = (stat.S_IFLNK | 0o777) << 16
+            archive.writestr(link, "target")
+        with self.assertRaisesRegex(ValueError, "symbolic link"):
+            canonicalize_extension_zip(output.getvalue(), include_paths=("manifest.json",))
+
     def test_wrapper_directory_is_removed_and_metadata_is_fixed(self) -> None:
         canonical = canonicalize_extension_zip(make_source_zip())
         self.assertEqual(canonical.name, "Example")

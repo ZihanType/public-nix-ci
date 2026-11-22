@@ -1,24 +1,81 @@
 from __future__ import annotations
 
+from contextlib import redirect_stdout
+import io
+import json
 from pathlib import Path
 import sys
 import tempfile
 import unittest
 from unittest import mock
+import zipfile
 
 
 COMPONENT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(COMPONENT_ROOT / "scripts"))
 
 from chromium_extensions.model import LockEntry, diff_locks, read_lock  # noqa: E402
+from chromium_extensions.crx3 import generate_rsa_private_key  # noqa: E402
+from chromium_extensions.sources import Download  # noqa: E402
 from chromium_extensions.pipeline import (  # noqa: E402
     GitWorkingTree,
+    PipelineOptions,
     _commit_lock_changes,
     _release_identity,
+    run_pipeline,
 )
 
 
 EXAMPLE_HASH = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+
+
+class SourceArchivePipelineTests(unittest.TestCase):
+    def test_source_archive_dry_run_and_selection_failure_preserve_checkout(self) -> None:
+        archive = io.BytesIO()
+        with zipfile.ZipFile(archive, "w") as source:
+            source.writestr("repo-sha/manifest.json", '{"name":"Example","version":"2.0"}')
+            source.writestr("repo-sha/script.js", "console.log('example');")
+            source.writestr("repo-sha/tests/manifest.json", "{}")
+        source_url = "https://api.github.com/repos/owner/repository/zipball/v2.0"
+        for missing in (False, True):
+            with self.subTest(missing=missing), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                component = root / "component"
+                (component / "keys").mkdir(parents=True)
+                key = component / "keys/example.pem"
+                generate_rsa_private_key(key)
+                include = ["manifest.json", "script.js"] + (["missing"] if missing else [])
+                catalog = component / "extensions.jsonc"
+                catalog.write_text(json.dumps({"chromeWebStore": [], "githubReleases": {
+                    "example": {"repository": "owner/repository", "sourceArchive": True, "include": include},
+                }}))
+                lock = component / "extensions.lock"
+                lock.write_text("[]\n")
+                before = {path: path.read_bytes() for path in component.rglob("*") if path.is_file()}
+                http = mock.Mock()
+                http.get_json.return_value = {"tag_name": "v2.0", "assets": [], "zipball_url": source_url}
+                http.download_public_source_archive.return_value = Download(archive.getvalue(), source_url, "application/zip")
+                options = PipelineOptions(component, root, catalog, lock, "owner/mirror", "main", None, dry_run=True)
+                with (
+                    mock.patch("chromium_extensions.pipeline.HttpClient", return_value=http),
+                    mock.patch("chromium_extensions.pipeline.GitHubRepository") as github,
+                    mock.patch("chromium_extensions.pipeline.GitWorkingTree") as git,
+                    redirect_stdout(io.StringIO()) as output,
+                ):
+                    if missing:
+                        with self.assertRaisesRegex(RuntimeError, "matched no files"):
+                            run_pipeline(options)
+                    else:
+                        changes = run_pipeline(options)
+                        self.assertEqual(len(changes), 1)
+                        self.assertEqual(changes[0].action_log, "Added Example: 2.0")
+                        self.assertIn("1 changes, 0 new keys", output.getvalue())
+                    github.assert_not_called()
+                    git.assert_not_called()
+                after = {path: path.read_bytes() for path in component.rglob("*") if path.is_file()}
+                self.assertEqual(after, before)
+                http.download_public_source_archive.assert_called_once_with(source_url)
+                http.download_public_asset.assert_not_called()
 
 
 class FakeGit:

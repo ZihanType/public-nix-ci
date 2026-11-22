@@ -29,6 +29,23 @@ Chrome Web Store entries need only their extension ID. Comments and trailing com
 
 The GitHub map key is a stable local identity. Its signing key lives at `keys/<name>.pem`. `asset` is optional only when the latest non-draft, non-prerelease Release contains exactly one ZIP; otherwise its case-sensitive glob must match exactly one asset.
 
+如果上游没有上传扩展 ZIP，但已将运行所需文件提交到仓库，可以显式选择最新正式 Release 对应标签的源码归档：
+
+```jsonc
+"clear-urls": {
+  "repository": "ClearURLs/Addon",
+  "sourceArchive": true,
+  "include": [
+    "clearurls.js", "browser-polyfill.js", "manifest.json",
+    "img", "external_js", "html", "core_js", "css", "fonts", "_locales",
+  ],
+},
+```
+
+`sourceArchive: true` 与 `asset` 互斥，`include` 仅用于源码模式且必须为非空清单。清单使用相对于仓库根目录的字面文件或目录路径：去除 GitHub ZIP 的外层包装目录，目录递归包含，不展开通配符；每项必须至少选中一个文件，上游改名或删除路径会使整个解析失败并保留现有锁文件。ClearURLs 的清单来自其 [bundle addon 配置](https://github.com/ClearURLs/Addon/blob/1.28.0/.gitlab-ci.yml)，不包含源码中的文档、测试或独立规则子模块。
+
+文件筛选前仍校验整个原始归档的安全性和资源上限，筛选后沿用唯一 manifest、本地化名称及确定性签名校验；选中的文件必须位于同一个扩展根目录中。源码模式下载 Release 元数据提供的 `zipball_url`，不跟踪开发分支，不自动回退到附件，也不执行上游编译命令或拉取子模块；需要先编译才能获得扩展文件的项目应提供已构建的发布附件。审计说明记录下载类型、源码文件清单、原始 ZIP 及规范化 ZIP 的哈希，扩展 ID 继续由原签名密钥决定。
+
 Versions and extension names are never entered manually. The workflow reads `manifest.json` from the current Web Store CRX or latest public GitHub Release ZIP. A localized manifest name is resolved through `default_locale`, then normalized once for the lock, generated Git history, Actions logs, and GitHub Releases; an invalid or missing localized name fails the atomic resolution.
 
 For Web Store requests, the client version is the full version from the `Stable` channel in Google's Chrome for Testing metadata. “Chrome for Testing” names the automation-oriented distribution and metadata service; `Stable` still means the Stable channel, not Beta, Dev, or Canary.

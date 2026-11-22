@@ -30,7 +30,21 @@
     },
     "clear-urls": {
       "repository": "ClearURLs/Addon",
-      "asset": "ClearURLs.zip",
+      "sourceArchive": true,
+      // 与 ClearURLs 的 bundle addon 文件清单一致；目录递归包含其内容。
+      // https://github.com/ClearURLs/Addon/blob/1.28.0/.gitlab-ci.yml
+      "include": [
+        "clearurls.js",
+        "browser-polyfill.js",
+        "manifest.json",
+        "img",
+        "external_js",
+        "html",
+        "core_js",
+        "css",
+        "fonts",
+        "_locales",
+      ],
     },
   },
 }

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 import sys
 import tempfile
@@ -42,6 +43,12 @@ class JsoncTests(unittest.TestCase):
 
 
 class CatalogTests(unittest.TestCase):
+    def read_source(self, source: dict[str, object]):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "extensions.jsonc"
+            path.write_text(json.dumps({"chromeWebStore": [], "githubReleases": {"example": source}}))
+            return Catalog.read(path).github_releases[0]
+
     def test_repository_catalog_parses(self) -> None:
         Catalog.read(COMPONENT_ROOT / "extensions.jsonc")
 
@@ -56,6 +63,40 @@ class CatalogTests(unittest.TestCase):
             )
             with self.assertRaisesRegex(ValueError, "duplicate"):
                 Catalog.read(path)
+
+    def test_source_archive_and_legacy_asset_modes(self) -> None:
+        source = self.read_source({
+            "repository": "owner/repository", "sourceArchive": True,
+            "include": ["manifest.json", "core_js"],
+        })
+        self.assertTrue(source.source_archive)
+        self.assertEqual(source.include_paths, ("manifest.json", "core_js"))
+        self.assertIsNone(source.asset_glob)
+        asset = self.read_source({"repository": "owner/repository", "asset": "extension*.zip"})
+        self.assertFalse(asset.source_archive)
+        self.assertEqual(asset.include_paths, ())
+        self.assertEqual(asset.asset_glob, "extension*.zip")
+
+    def test_invalid_source_configuration_is_rejected(self) -> None:
+        cases = [
+            ({"sourceArchive": True, "asset": "a.zip", "include": ["manifest.json"]}, "conflicts"),
+            ({"sourceArchive": True}, "non-empty include"),
+            ({"sourceArchive": True, "include": []}, "non-empty include"),
+            ({"include": ["manifest.json"]}, "requires sourceArchive"),
+            ({"sourceArchive": False, "include": ["manifest.json"]}, "requires sourceArchive"),
+            ({"sourceArchive": "true"}, "boolean"),
+            ({"sourceArchive": True, "include": ["a", "a"]}, "duplicate include"),
+        ]
+        for fields, message in cases:
+            with self.subTest(fields=fields), self.assertRaisesRegex(ValueError, message):
+                self.read_source({"repository": "owner/repository", **fields})
+
+    def test_include_paths_must_be_literal_repository_relative_paths(self) -> None:
+        for path in ("", "/a", "../a", "a/../b", "./a", "a//b", "a/", "a\\b", "a\x00b", 1):
+            with self.subTest(path=path), self.assertRaisesRegex(ValueError, "relative file or directory"):
+                self.read_source({
+                    "repository": "owner/repository", "sourceArchive": True, "include": [path],
+                })
 
 
 class LockTests(unittest.TestCase):

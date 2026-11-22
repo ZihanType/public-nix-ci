@@ -6,6 +6,7 @@ import base64
 import concurrent.futures
 from dataclasses import dataclass
 import hashlib
+import json
 from pathlib import Path
 import re
 import subprocess
@@ -152,8 +153,8 @@ def _github_notes(
     *,
     source: GitHubReleaseSource,
     upstream_tag: str,
-    upstream_asset_name: str,
-    upstream_asset_url: str,
+    upstream_archive_name: str,
+    upstream_archive_url: str,
     upstream_zip: bytes,
     source_root: str,
     canonical_zip: bytes,
@@ -167,7 +168,9 @@ def _github_notes(
 
 - Upstream repository: `{repository}`
 - Upstream release tag: `{upstream_tag}`
-- Upstream asset: [`{upstream_asset_name}`]({upstream_asset_url})
+- 上游 ZIP 类型：{upstream_kind}
+- 上游 ZIP：[`{upstream_archive_name}`]({upstream_archive_url})
+- 源码文件选择：{include_paths}
 - Upstream ZIP SHA-256: `sha256:{upstream_sha256}`
 - Extension root inside ZIP: `{source_root}`
 - Canonical ZIP SHA-256: `sha256:{canonical_sha256}`
@@ -180,8 +183,10 @@ The signing private key is deliberately public under `{signing_key_repository_pa
 """.format(
         repository=source.repository,
         upstream_tag=upstream_tag,
-        upstream_asset_name=upstream_asset_name,
-        upstream_asset_url=upstream_asset_url,
+        upstream_kind="Release 源码归档" if source.source_archive else "GitHub Release 附件",
+        upstream_archive_name=upstream_archive_name,
+        upstream_archive_url=upstream_archive_url,
+        include_paths=json.dumps(source.include_paths, ensure_ascii=False) if source.source_archive else "不筛选",
         upstream_sha256=sha256_hex(upstream_zip),
         source_root=source_root,
         canonical_sha256=sha256_hex(canonical_zip),
@@ -255,7 +260,10 @@ class Resolver:
         existing_by_id: Mapping[str, LockEntry],
     ) -> Tuple[ResolvedArtifact, Optional[PendingKey]]:
         upstream = self.public_github.resolve_zip(source)
-        canonical = canonicalize_extension_zip(upstream.contents)
+        canonical = canonicalize_extension_zip(
+            upstream.contents,
+            include_paths=source.include_paths if source.source_archive else None,
+        )
         final_key_path = self.component_root / source.key_path
         pending_key: Optional[PendingKey] = None
         if final_key_path.exists():
@@ -281,8 +289,8 @@ class Resolver:
             _github_notes(
                 source=source,
                 upstream_tag=upstream.release_tag,
-                upstream_asset_name=upstream.asset_name,
-                upstream_asset_url=upstream.asset_url,
+                upstream_archive_name=upstream.archive_name,
+                upstream_archive_url=upstream.archive_url,
                 upstream_zip=upstream.contents,
                 source_root=canonical.source_root,
                 canonical_zip=canonical.zip_bytes,

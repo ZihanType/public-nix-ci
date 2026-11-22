@@ -21,7 +21,7 @@ import threading
 from typing import Dict, List, Mapping, Optional, Sequence, Tuple
 import zipfile
 
-from .model import VERSION_RE, normalize_extension_name
+from .model import VERSION_RE, normalize_extension_name, validate_source_include_path
 
 
 CRX_MAGIC = b"Cr24"
@@ -311,7 +311,39 @@ def _safe_archive_path(name: str) -> PurePosixPath:
     return path
 
 
-def canonicalize_extension_zip(contents: bytes) -> CanonicalExtension:
+def _select_source_files(
+    paths: Mapping[PurePosixPath, zipfile.ZipInfo],
+    include_paths: Sequence[str],
+) -> Dict[PurePosixPath, zipfile.ZipInfo]:
+    """去除 GitHub 源码归档的外层目录后，按仓库相对路径选择文件。"""
+
+    wrappers = {path.parts[0] for path in paths}
+    if len(wrappers) != 1 or any(
+        len(path.parts) < 2 and not info.is_dir() for path, info in paths.items()
+    ):
+        raise ValueError("source ZIP must have one repository wrapper directory")
+    if not include_paths:
+        raise ValueError("source ZIP requires a non-empty include list")
+    wrapper = PurePosixPath(next(iter(wrappers)))
+    selected: Dict[PurePosixPath, zipfile.ZipInfo] = {}
+    for item in include_paths:
+        prefix = wrapper / validate_source_include_path(item)
+        matches = {
+            path: info
+            for path, info in paths.items()
+            if not info.is_dir() and (path == prefix or prefix in path.parents)
+        }
+        if not matches:
+            raise ValueError("source include path %r matched no files" % item)
+        selected.update(matches)
+    return selected
+
+
+def canonicalize_extension_zip(
+    contents: bytes,
+    *,
+    include_paths: Optional[Sequence[str]] = None,
+) -> CanonicalExtension:
     if len(contents) > MAX_ARCHIVE_BYTES:
         raise ValueError("ZIP exceeds the %d-byte compressed size limit" % MAX_ARCHIVE_BYTES)
 
@@ -331,7 +363,6 @@ def canonicalize_extension_zip(contents: bytes) -> CanonicalExtension:
             )
 
         paths: Dict[PurePosixPath, zipfile.ZipInfo] = {}
-        manifest_paths: List[PurePosixPath] = []
         for info in infos:
             path = _safe_archive_path(info.filename.rstrip("/") if info.is_dir() else info.filename)
             if path in paths:
@@ -346,8 +377,13 @@ def canonicalize_extension_zip(contents: bytes) -> CanonicalExtension:
                 raise ValueError("ZIP contains a symbolic link: %s" % path)
             if file_type not in {0, stat.S_IFREG, stat.S_IFDIR}:
                 raise ValueError("ZIP contains a special filesystem entry: %s" % path)
-            if not info.is_dir() and path.name == "manifest.json":
-                manifest_paths.append(path)
+        # 整个原始归档先通过安全检查，再应用用户声明的源码文件清单。
+        if include_paths is not None:
+            paths = _select_source_files(paths, include_paths)
+        manifest_paths = [
+            path for path, info in paths.items()
+            if not info.is_dir() and path.name == "manifest.json"
+        ]
 
         if len(manifest_paths) != 1:
             raise ValueError(
@@ -366,7 +402,6 @@ def canonicalize_extension_zip(contents: bytes) -> CanonicalExtension:
         version = manifest_value.get("version")
         if not isinstance(version, str) or not VERSION_RE.fullmatch(version):
             raise ValueError("manifest.json contains an invalid version")
-        extension_name = _extension_name_from_archive(manifest_value, archive, root)
 
         canonical_files: List[Tuple[str, int, bytes]] = []
         for path, info in paths.items():
@@ -374,7 +409,11 @@ def canonicalize_extension_zip(contents: bytes) -> CanonicalExtension:
                 continue
             try:
                 relative = path.relative_to(root) if root.parts else path
-            except ValueError:
+            except ValueError as error:
+                if include_paths is not None:
+                    raise ValueError(
+                        "source include selects files outside extension root: %s" % path
+                    ) from error
                 # Files outside the unique extension root are packaging metadata,
                 # not part of the browser extension.
                 continue
@@ -398,8 +437,14 @@ def canonicalize_extension_zip(contents: bytes) -> CanonicalExtension:
             info.comment = b""
             rendered.writestr(info, file_contents)
 
+    canonical_zip = output.getvalue()
+    # 名称解析也基于最终文件集合，防止从已被清单排除的翻译文件读取名称。
+    with zipfile.ZipFile(io.BytesIO(canonical_zip)) as final_archive:
+        extension_name = _extension_name_from_archive(
+            manifest_value, final_archive, PurePosixPath()
+        )
     source_root = "." if not root.parts else root.as_posix()
-    return CanonicalExtension(output.getvalue(), manifest_value, extension_name, source_root)
+    return CanonicalExtension(canonical_zip, manifest_value, extension_name, source_root)
 
 
 @dataclass(frozen=True)

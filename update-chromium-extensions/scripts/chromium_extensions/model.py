@@ -155,11 +155,27 @@ def parse_jsonc(text: str) -> object:
     return json.loads(_remove_trailing_commas(_remove_jsonc_comments(text)))
 
 
+def validate_source_include_path(value: object) -> str:
+    """校验源码归档中相对于仓库根目录的字面文件或目录路径。"""
+
+    if (
+        not isinstance(value, str)
+        or not value
+        or "\\" in value
+        or "\x00" in value
+        or any(part in {"", ".", ".."} for part in value.split("/"))
+    ):
+        raise ValueError("source include must be a relative file or directory path")
+    return value
+
+
 @dataclass(frozen=True)
 class GitHubReleaseSource:
     name: str
     repository: str
     asset_glob: Optional[str]
+    source_archive: bool = False
+    include_paths: Tuple[str, ...] = ()
 
     @property
     def key_path(self) -> Path:
@@ -210,7 +226,9 @@ class Catalog:
                 raise ValueError("invalid GitHub source name: %r" % name)
             if not isinstance(source, dict):
                 raise ValueError("GitHub source %s must be an object" % name)
-            unexpected_source = sorted(set(source) - {"repository", "asset"})
+            unexpected_source = sorted(
+                set(source) - {"repository", "asset", "sourceArchive", "include"}
+            )
             if unexpected_source:
                 raise ValueError(
                     "GitHub source %s has unsupported properties: %s"
@@ -219,6 +237,21 @@ class Catalog:
             repository = source.get("repository")
             if not isinstance(repository, str) or not GITHUB_REPOSITORY_RE.fullmatch(repository):
                 raise ValueError("GitHub source %s has an invalid repository" % name)
+            source_archive = source.get("sourceArchive", False)
+            if not isinstance(source_archive, bool):
+                raise ValueError("GitHub source %s sourceArchive must be a boolean" % name)
+            include_paths: Tuple[str, ...] = ()
+            if source_archive:
+                if "asset" in source:
+                    raise ValueError("GitHub source %s sourceArchive conflicts with asset" % name)
+                includes = source.get("include")
+                if not isinstance(includes, list) or not includes:
+                    raise ValueError("GitHub source %s requires a non-empty include list" % name)
+                include_paths = tuple(validate_source_include_path(item) for item in includes)
+                if len(set(include_paths)) != len(include_paths):
+                    raise ValueError("GitHub source %s has duplicate include paths" % name)
+            elif "include" in source:
+                raise ValueError("GitHub source %s include requires sourceArchive" % name)
             asset_glob = source.get("asset")
             if asset_glob is not None:
                 if (
@@ -229,7 +262,9 @@ class Catalog:
                     or not asset_glob.lower().endswith(".zip")
                 ):
                     raise ValueError("GitHub source %s has an invalid ZIP asset glob" % name)
-            github_releases.append(GitHubReleaseSource(name, repository, asset_glob))
+            github_releases.append(
+                GitHubReleaseSource(name, repository, asset_glob, source_archive, include_paths)
+            )
 
         return cls(tuple(web_store_ids), tuple(github_releases))
 

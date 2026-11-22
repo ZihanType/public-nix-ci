@@ -16,6 +16,14 @@ _Avoid_: Store extension, official extension
 An extension whose upstream ZIP archive is packaged and signed with a key owned by this repository. It has a new identity and does not inherit the Chrome Web Store extension's data or grants.
 _Avoid_: GitHub extension, converted extension, original extension
 
+**GitHub Release asset**:
+本组件获取的、由上游发布者上传到 GitHub Release 的扩展分发附件。
+_Avoid_: 源码归档、自动源码包
+
+**Release source archive**:
+本组件获取的、由 GitHub 根据 Release 对应标签自动生成的仓库源码归档；它与发布者上传的附件是不同的分发对象。
+_Avoid_: 发布附件、编译产物
+
 **Extension artifact**:
 An immutable CRX identified by its extension ID and manifest version and published by this repository for an extension lock to reference.
 _Avoid_: Package, release file, download

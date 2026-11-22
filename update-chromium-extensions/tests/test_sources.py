@@ -25,6 +25,7 @@ from chromium_extensions.sources import (  # noqa: E402
     Download,
     HttpClient,
     PublicGitHubReleaseClient,
+    _SourceArchiveConnection,
 )
 
 
@@ -326,7 +327,7 @@ class SourceTests(unittest.TestCase):
         artifact = client.resolve_zip(
             GitHubReleaseSource("example", "owner/repository", "example-[0-9.]*.zip")
         )
-        self.assertEqual(artifact.asset_name, "example-2.3.4.zip")
+        self.assertEqual(artifact.archive_name, "example-2.3.4.zip")
         self.assertEqual(artifact.release_tag, "2.3.4")
 
     def test_omitted_glob_fails_when_release_has_multiple_zips(self) -> None:
@@ -334,6 +335,69 @@ class SourceTests(unittest.TestCase):
         client = PublicGitHubReleaseClient(http)  # type: ignore[arg-type]
         with self.assertRaisesRegex(ValueError, "exactly one"):
             client.resolve_zip(GitHubReleaseSource("example", "owner/repository", None))
+
+    def test_source_archive_uses_release_zipball_without_assets(self) -> None:
+        http = mock.Mock()
+        source_url = "https://api.github.com/repos/owner/repository/zipball/v2.3.4"
+        http.get_json.return_value = {
+            "tag_name": "v2.3.4",
+            "assets": [],
+            "zipball_url": source_url,
+        }
+        http.download_public_source_archive.return_value = Download(source_zip(), source_url, "application/zip")
+        artifact = PublicGitHubReleaseClient(http).resolve_zip(
+            GitHubReleaseSource("example", "owner/repository", None, True, ("manifest.json",))
+        )
+        self.assertEqual(artifact.release_tag, "v2.3.4")
+        self.assertEqual(artifact.archive_url, source_url)
+        http.get_json.assert_called_once_with(
+            "https://api.github.com/repos/owner/repository/releases/latest", github_api=True
+        )
+        http.download_public_source_archive.assert_called_once_with(source_url)
+        http.download_public_asset.assert_not_called()
+
+    def test_source_archive_does_not_fall_back_to_an_asset(self) -> None:
+        http = mock.Mock()
+        http.get_json.return_value = {
+            "tag_name": "2.3.4",
+            "assets": [{"name": "extension.zip", "browser_download_url": "https://example.invalid/a.zip"}],
+        }
+        with self.assertRaisesRegex(ValueError, "no source ZIP URL"):
+            PublicGitHubReleaseClient(http).resolve_zip(
+                GitHubReleaseSource("example", "owner/repository", None, True, ("manifest.json",))
+            )
+        http.download_public_asset.assert_not_called()
+        http.download_public_source_archive.assert_not_called()
+
+    def test_source_archive_rejects_draft_and_prerelease(self) -> None:
+        for flag in ("draft", "prerelease"):
+            with self.subTest(flag=flag):
+                http = mock.Mock()
+                http.get_json.return_value = {"tag_name": "2.3.4", flag: True}
+                with self.assertRaisesRegex(ValueError, "draft or prerelease"):
+                    PublicGitHubReleaseClient(http).resolve_zip(
+                        GitHubReleaseSource("example", "owner/repository", None, True, ("manifest.json",))
+                    )
+                http.download_public_asset.assert_not_called()
+                http.download_public_source_archive.assert_not_called()
+
+    def test_source_cdn_connection_keeps_open_until_body_is_read(self) -> None:
+        for host, expected in (("codeload.github.com", "keep-alive"), ("api.github.com", "close")):
+            with self.subTest(host=host), mock.patch.object(http.client.HTTPSConnection, "putheader") as putheader:
+                connection = _SourceArchiveConnection(host)
+                connection.putheader("Connection", "close")
+                putheader.assert_called_once_with("Connection", expected)
+
+    def test_source_download_stays_anonymous_and_uses_bounded_reader(self) -> None:
+        opener = mock.Mock()
+        opener.open.return_value = FakeResponse(b"source ZIP")
+        with mock.patch("urllib.request.build_opener", return_value=opener):
+            download = HttpClient(github_token="test-token").download_public_source_archive(
+                "https://api.github.com/repos/owner/repository/zipball/v1"
+            )
+        self.assertEqual(download.contents, b"source ZIP")
+        request = opener.open.call_args.args[0]
+        self.assertIsNone(request.get_header("Authorization"))
 
 
 if __name__ == "__main__":
