@@ -1,0 +1,12 @@
+{
+  "aarch64-darwin": {
+    "hash": "sha256-oih4OIieexc0pl2VK65e9/R5vcFj0MMb6RhZvKEg/T4=",
+    "url": "https://github.com/ZihanType/public-nix-ci/releases/download/snipaste-2.11.3-aarch64-darwin-a2287838889e7b1734a65d952bae5ef7f479bdc163d0c31be91859bca120fd3e/Snipaste-2.11.3.dmg",
+    "version": "2.11.3"
+  },
+  "x86_64-linux": {
+    "hash": "sha256-6ARv8gRbZoul+sbXc9g3MTE6TwC6FxFHxvoaE4UkAzQ=",
+    "url": "https://github.com/ZihanType/public-nix-ci/releases/download/snipaste-2.11.3-x86_64-linux-e8046ff2045b668ba5fac6d773d83731313a4f00ba171147c6fa1a1385240334/Snipaste-2.11.3-x86_64.AppImage",
+    "version": "2.11.3"
+  }
+}
