@@ -74,7 +74,7 @@ jobs:
       # - uses: wimpysworld/nothing-but-nix@v10
 
       - name: Install Nix
-        uses: cachix/install-nix-action@v31
+        uses: cachix/install-nix-action@v32
         with:
           extra_nix_config: |
             access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
@@ -137,7 +137,7 @@ jobs:
   #         persist-credentials: false
 
   #     - name: Install Nix with container-test support
-  #       uses: cachix/install-nix-action@v31
+  #       uses: cachix/install-nix-action@v32
   #       with:
   #         extra_nix_config: |
   #           access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
