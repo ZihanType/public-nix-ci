@@ -121,9 +121,9 @@
   {
     "name": "Imp Translate: Bilingual AI Page Translator",
     "id": "nmbcckfgobecechfdamananmfnnjbbbd",
-    "version": "0.2.17",
-    "url": "https://github.com/ZihanType/public-nix-ci/releases/download/extension-nmbcckfgobecechfdamananmfnnjbbbd-v0.2.17/nmbcckfgobecechfdamananmfnnjbbbd-0.2.17.crx",
-    "sha256": "sha256-fo3Ex+UbsyTzfHo/2Unr/0yWUgK4f4CmM+yHObKhLeM="
+    "version": "0.2.18",
+    "url": "https://github.com/ZihanType/public-nix-ci/releases/download/extension-nmbcckfgobecechfdamananmfnnjbbbd-v0.2.18/nmbcckfgobecechfdamananmfnnjbbbd-0.2.18.crx",
+    "sha256": "sha256-6Jndp4y2WqK0sE9/OBjdV1rHY5U7Q0nVsrsG7aMhqsI="
   },
   {
     "name": "C/C++ DevTools Support (DWARF)",
