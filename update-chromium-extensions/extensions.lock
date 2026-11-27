@@ -105,13 +105,6 @@
     "sha256": "sha256-VU5rp0thN74sBwXpTf+mQjSgYtI2aYYRq5wwWl3oYPo="
   },
   {
-    "name": "Imp Translate: Bilingual AI Page Translator",
-    "id": "nmbcckfgobecechfdamananmfnnjbbbd",
-    "version": "0.2.18",
-    "url": "https://github.com/ZihanType/public-nix-ci/releases/download/extension-nmbcckfgobecechfdamananmfnnjbbbd-v0.2.18/nmbcckfgobecechfdamananmfnnjbbbd-0.2.18.crx",
-    "sha256": "sha256-6Jndp4y2WqK0sE9/OBjdV1rHY5U7Q0nVsrsG7aMhqsI="
-  },
-  {
     "name": "C/C++ DevTools Support (DWARF)",
     "id": "pdcpmagijalfljmkmjngeonclgbbannb",
     "version": "0.2.5854.1",
