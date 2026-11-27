@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import http.client
+from itertools import count
 from pathlib import Path
 import time
 import urllib.error
@@ -16,6 +17,9 @@ MAX_DOWNLOAD_SIZE = 2 * 1024 * 1024 * 1024
 USER_AGENT = "public-nix-ci-wechat-mirror/1"
 # 每 30 秒报告一次下载量，区分 CI 网络缓慢与后续安装包解析停滞。
 PROGRESS_INTERVAL = 30
+# 用户确认下载无限重试，退避从 1 秒翻倍至最多 60 秒，避免持续失败时频繁请求。
+INITIAL_RETRY_DELAY = 1
+MAX_RETRY_DELAY = 60
 
 
 class HTTPSRedirectHandler(urllib.request.HTTPRedirectHandler):
@@ -34,24 +38,26 @@ def download(
     destination: Path,
     *,
     headers: dict[str, str] | None = None,
-    attempts: int = 3,
 ) -> str:
     if urllib.parse.urlsplit(url).scheme != "https":
         raise ValueError("下载地址必须使用 HTTPS")
     request_headers = {"User-Agent": USER_AGENT, "Accept-Encoding": "identity"}
     request_headers.update(headers or {})
     opener = urllib.request.build_opener(HTTPSRedirectHandler())
-    for attempt in range(attempts):
+    retry_delay = INITIAL_RETRY_DELAY
+    for attempt in count(1):
         try:
             started = last_report = time.monotonic()
-            print(f"下载 {destination.name}，第 {attempt + 1}/{attempts} 次尝试", flush=True)
+            print(f"下载 {destination.name}，第 {attempt} 次尝试", flush=True)
             request = urllib.request.Request(url, headers=request_headers)
             with opener.open(request, timeout=60) as response, destination.open("wb") as out:
                 if response.status != 200:
-                    raise ValueError(f"完整下载要求 HTTP 200，实际为 {response.status}")
+                    raise http.client.HTTPException(
+                        f"完整下载要求 HTTP 200，实际为 {response.status}"
+                    )
                 expected = response.headers.get("Content-Length")
                 expected_size = int(expected) if expected is not None else None
-                if expected_size is not None and not 0 < expected_size <= MAX_DOWNLOAD_SIZE:
+                if expected_size is not None and not 0 <= expected_size <= MAX_DOWNLOAD_SIZE:
                     raise ValueError("下载文件大小不在允许范围内")
                 digest = hashlib.sha256()
                 size = 0
@@ -77,13 +83,15 @@ def download(
                     flush=True,
                 )
                 return digest.hexdigest()
-        except urllib.error.HTTPError as error:
+        except ValueError:
             destination.unlink(missing_ok=True)
-            if error.code not in {408, 429, 500, 502, 503, 504} or attempt + 1 == attempts:
-                raise RuntimeError(f"下载失败：HTTP {error.code}，{url}") from error
-        except (OSError, urllib.error.URLError, http.client.HTTPException):
+            raise
+        except (OSError, urllib.error.URLError, http.client.HTTPException) as error:
             destination.unlink(missing_ok=True)
-            if attempt + 1 == attempts:
-                raise
-        time.sleep(2**attempt)
-    raise RuntimeError("下载重试次数必须大于零")
+            print(
+                f"下载 {destination.name} 失败（第 {attempt} 次）：{error}；"
+                f"{retry_delay} 秒后重试",
+                flush=True,
+            )
+        time.sleep(retry_delay)
+        retry_delay = min(retry_delay * 2, MAX_RETRY_DELAY)

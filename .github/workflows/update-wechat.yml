@@ -15,7 +15,8 @@ jobs:
   update:
     name: 镜像微信 Linux 安装包
     runs-on: ubuntu-26.04
-    timeout-minutes: 45
+    # 下载次数不限；总时长使用 GitHub 托管 runner 的单任务上限 6 小时。
+    timeout-minutes: 360
     permissions:
       contents: write
     defaults:
