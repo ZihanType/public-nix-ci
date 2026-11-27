@@ -21,13 +21,6 @@
     "sha256": "sha256-RXeWuePQuElj8Gv4klTJ5mltjJH2XbSAkWRUfqIU5vQ="
   },
   {
-    "name": "DeepL: translate and write with AI",
-    "id": "cofdbpoegempjloogbagkncekinflcnj",
-    "version": "1.108.0",
-    "url": "https://github.com/ZihanType/public-nix-ci/releases/download/extension-cofdbpoegempjloogbagkncekinflcnj-v1.108.0/cofdbpoegempjloogbagkncekinflcnj-1.108.0.crx",
-    "sha256": "sha256-K9pfJhXKKzn+w/jP+dRVxH05GZNKpxhopPQvVyZAa9I="
-  },
-  {
     "name": "User-Agent Switcher for Chrome",
     "id": "djflhoibgkdhkhhcedjiklpkjnoahfmg",
     "version": "2.0.2",
