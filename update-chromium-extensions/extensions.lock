@@ -16,9 +16,9 @@
   {
     "name": "uBlock Origin",
     "id": "ccnjcdhodlnppgfcglhmpgfancbdhojh",
-    "version": "1.77.2",
-    "url": "https://github.com/ZihanType/public-nix-ci/releases/download/extension-ccnjcdhodlnppgfcglhmpgfancbdhojh-v1.77.2/ccnjcdhodlnppgfcglhmpgfancbdhojh-1.77.2.crx",
-    "sha256": "sha256-RXeWuePQuElj8Gv4klTJ5mltjJH2XbSAkWRUfqIU5vQ="
+    "version": "1.77.4",
+    "url": "https://github.com/ZihanType/public-nix-ci/releases/download/extension-ccnjcdhodlnppgfcglhmpgfancbdhojh-v1.77.4/ccnjcdhodlnppgfcglhmpgfancbdhojh-1.77.4.crx",
+    "sha256": "sha256-1NYPlxBXg21j8y9RnwJ8HoZ6XhZ30CWQXsaSSiaqb8E="
   },
   {
     "name": "User-Agent Switcher for Chrome",
