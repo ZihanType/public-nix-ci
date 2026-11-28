@@ -100,9 +100,9 @@
   {
     "name": "SingleFile",
     "id": "mpiodijhokgodhhofbcjdecpffjipkle",
-    "version": "1.41.1",
-    "url": "https://github.com/ZihanType/public-nix-ci/releases/download/extension-mpiodijhokgodhhofbcjdecpffjipkle-v1.41.1/mpiodijhokgodhhofbcjdecpffjipkle-1.41.1.crx",
-    "sha256": "sha256-VU5rp0thN74sBwXpTf+mQjSgYtI2aYYRq5wwWl3oYPo="
+    "version": "1.42.0",
+    "url": "https://github.com/ZihanType/public-nix-ci/releases/download/extension-mpiodijhokgodhhofbcjdecpffjipkle-v1.42.0/mpiodijhokgodhhofbcjdecpffjipkle-1.42.0.crx",
+    "sha256": "sha256-o+m7d+jpYzG5dAeDX/EaqgbMLoJrSCWGg+rS+VjH8zM="
   },
   {
     "name": "C/C++ DevTools Support (DWARF)",
